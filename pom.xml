@@ -6,7 +6,7 @@
 
   <groupId>au.wildie.m68k</groupId>
   <artifactId>cromix-fs</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0</version>
 
   <name>cromix-fs</name>
 
