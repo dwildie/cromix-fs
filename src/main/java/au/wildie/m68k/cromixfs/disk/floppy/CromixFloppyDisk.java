@@ -48,7 +48,7 @@ public class CromixFloppyDisk implements DiskInterface {
     }
 
     public void extract(String path) throws IOException {
-        System.out.printf("Extracting to: %s\n", path);
+        System.out.printf("Extracting to directory: %s\n", path);
         new FileSystem(this).extract(path);
     }
 

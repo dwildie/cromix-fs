@@ -67,6 +67,7 @@ public class IMDImage {
                 sector.setOffset(offset);
 
                 if (sector.getEncoding() == 1) {
+                    // Normal data
                     for (int j = 0; j < track.getSectorSize(); j++) {
                         sector.getData()[j] = raw[index++];
                     }
@@ -76,6 +77,13 @@ public class IMDImage {
                         sector.getData()[j] = value;
                     }
                     sector.setEncoding(1);
+                } else if (sector.getEncoding() == 5) {
+                    // Normal data with read errors
+                    System.out.printf("Error: cylinder %d, head %d, sector %d%n", track.getCylinder(), track.getHead(), sector.getNumber());
+                    for (int j = 0; j < track.getSectorSize(); j++) {
+                        sector.getData()[j] = raw[index++];
+                    }
+
                 } else {
                     throw new ImageException(String.format("Unexpected sector encoding: 0x%02x",sector.getEncoding()));
                 }
