@@ -1,7 +1,6 @@
 package au.wildie.m68k.cromixfs.fs;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -53,9 +52,6 @@ public class FileSystem {
 
     private int inodeFirst;
     private int inodeCount;
-
-    private FileOutputStream tarOut;
-    private TarArchiveOutputStream tar;
 
     public FileSystem(DiskInterface disk) {
         this.disk = disk;
