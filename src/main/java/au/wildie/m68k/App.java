@@ -20,7 +20,7 @@ public class App
 
             CromixFloppyDisk floppy = new CromixFloppyDisk(args[1]);
 
-            floppy.list();
+            floppy.list(System.out);
             return;
         } else if (args.length == 3 && args[0].equalsIgnoreCase("-x")) {
             if (!new File(args[1]).exists()) {

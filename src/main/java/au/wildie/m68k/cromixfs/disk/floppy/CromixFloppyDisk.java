@@ -6,10 +6,7 @@ import au.wildie.m68k.cromixfs.disk.imd.Sector;
 import au.wildie.m68k.cromixfs.disk.imd.Track;
 import au.wildie.m68k.cromixfs.fs.FileSystem;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.Arrays;
 
 import static au.wildie.m68k.cromixfs.disk.floppy.DiskDensity.DOUBLE;
@@ -19,11 +16,11 @@ import static au.wildie.m68k.cromixfs.disk.floppy.DiskSize.SMALL;
 
 public class CromixFloppyDisk implements DiskInterface {
 
-    private IMDImage image;
-    private DiskSize diskSize;
-    private DiskDensity diskDensity;
-    private DiskSides diskSides;
-    private CromixFloppyInfo info;
+    private final IMDImage image;
+    private final DiskSize diskSize;
+    private final DiskDensity diskDensity;
+    private final DiskSides diskSides;
+    private final CromixFloppyInfo info;
 
     public CromixFloppyDisk(String fileName) {
         image = new IMDImage(0, fileName);
@@ -43,8 +40,8 @@ public class CromixFloppyDisk implements DiskInterface {
         info = CromixFloppyInfo.get(diskSize, diskDensity);
     }
 
-    public void list() throws IOException {
-        new FileSystem(this).list();
+    public void list(PrintStream out) throws IOException {
+        new FileSystem(this).list(out);
     }
 
     public void extract(String path) throws IOException {
@@ -112,9 +109,9 @@ public class CromixFloppyDisk implements DiskInterface {
     }
 
     private void checkSupported() {
-        if (diskSize != LARGE) {
-            throw new RuntimeException(String.format("%s size disks are not supported", diskSize));
-        }
+//        if (diskSize != LARGE) {
+//            throw new RuntimeException(String.format("%s size disks are not supported", diskSize));
+//        }
         if (diskDensity != DOUBLE) {
             throw new RuntimeException(String.format("%s density disks are not supported", diskSize));
         }

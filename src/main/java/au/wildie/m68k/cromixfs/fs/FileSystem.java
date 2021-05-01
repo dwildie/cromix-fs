@@ -2,13 +2,11 @@ package au.wildie.m68k.cromixfs.fs;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.Arrays;
 
-import static au.wildie.m68k.cromixfs.fs.DumpMode.*;
+import static au.wildie.m68k.cromixfs.fs.DumpMode.EXTRACT;
+import static au.wildie.m68k.cromixfs.fs.DumpMode.LIST;
 
 public class FileSystem {
     private static final int SUPER_INODE_FIRST_OFFSET = 0x08;
@@ -31,10 +29,10 @@ public class FileSystem {
     private static final int INODE_MAJOR_OFFSET     = 0x12;
     private static final int INODE_MINOR_OFFSET     = 0x13;
     private static final int INODE_BLOCKS_OFFSET    = 0x14;
-    private static final int INODE_CREATED_T_OFFSET = 0x18;
-    private static final int INODE_CREATED_M_OFFSET = 0x1E;
-    private static final int INODE_CREATED_A_OFFSET = 0x24;
-    private static final int INODE_CREATED_D_OFFSET = 0x2A;
+    private static final int INODE_CREATED_OFFSET   = 0x18;
+    private static final int INODE_MODIFIED_OFFSET  = 0x1E;
+    private static final int INODE_ACCESSED_OFFSET  = 0x24;
+    private static final int INODE_DUMPED_OFFSET    = 0x2A;
     private static final int INODE_PTRS_OFFSET      = 0x30;
 
 
@@ -48,10 +46,9 @@ public class FileSystem {
 
     private static final int BLOCK_POINTER_COUNT = 0x80;
 
-    private DiskInterface disk;
+    private final DiskInterface disk;
 
-    private int inodeFirst;
-    private int inodeCount;
+    private final int inodeFirst;
 
     public FileSystem(DiskInterface disk) {
         this.disk = disk;
@@ -64,19 +61,18 @@ public class FileSystem {
         }
 
         inodeFirst = readWord(superBlock, SUPER_INODE_FIRST_OFFSET);
-        inodeCount = readWord(superBlock, SUPER_INODE_COUNT_OFFSET);
     }
 
 
-    public void list() throws IOException {
-        readDirectory("", readINode( 1), LIST, null);
+    public void list(PrintStream out) throws IOException {
+        readDirectory("", readINode( 1), LIST, null, out);
     }
 
     public void extract(String path) throws IOException {
-        readDirectory("", readINode( 1), EXTRACT, path);
+        readDirectory("", readINode( 1), EXTRACT, path, System.out);
     }
 
-    private void readDirectory(String srcPath, byte[] inode, DumpMode mode, String trgPath) throws IOException {
+    private void readDirectory(String srcPath, byte[] inode, DumpMode mode, String trgPath, PrintStream out) throws IOException {
         for (int i = 0; i < 0x10; i++) {
             int blockNumber = readDWord(inode, INODE_PTRS_OFFSET + i * 4);
             if (blockNumber != 0) {
@@ -105,17 +101,17 @@ public class FileSystem {
                             int major = 0xFF & entryINode[INODE_MAJOR_OFFSET];
                             int minor = 0xFF & entryINode[INODE_MINOR_OFFSET];
 
-                            System.out.print(String.format("  %3d,%-3d", major, minor));
+                            out.printf("  %3d,%-3d", major, minor);
                         } else {
-                            System.out.print(String.format("%9d", size));
+                            out.printf("%9d", size);
                         }
-                        System.out.println(String.format(" %s %2d %s %s %s %5d %5d %s%s%s", getType(type), lnks, getPermission(usrP), getPermission(grpP), getPermission(othP), owner, group, srcPath, File.separator, name));
+                        out.printf(" %s %2d %s %s %s %5d %5d %s%s%s%n", getType(type), lnks, getPermission(usrP), getPermission(grpP), getPermission(othP), owner, group, srcPath, File.separator, name);
 
                         if (type == INODE_TYPE_DIR) {
                             if (mode == EXTRACT) {
                                 new File(trgPath + File.separator + name).mkdirs();
                             }
-                            readDirectory(srcPath + File.separator + name, entryINode, mode, mode == EXTRACT ? (trgPath + File.separator + name) : (srcPath + File.separator + name));
+                            readDirectory(srcPath + File.separator + name, entryINode, mode, mode == EXTRACT ? (trgPath + File.separator + name) : (srcPath + File.separator + name), out);
                         }
                         if (type == INODE_TYPE_FILE && mode == EXTRACT) {
                             extractFile(entryINode, size, trgPath + File.separator + name);
@@ -124,7 +120,7 @@ public class FileSystem {
                 }
             }
         }
-        System.out.print("");
+        out.print("");
     }
 
     private void extractFile(byte[] inode, int size, String path) throws IOException {
