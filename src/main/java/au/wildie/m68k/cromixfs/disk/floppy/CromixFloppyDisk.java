@@ -26,15 +26,17 @@ public class CromixFloppyDisk implements DiskInterface {
         image = new IMDImage(0, fileName);
 
         Sector zero = image.getSector(0, 0, 1);
-        byte[] typeIde = Arrays.copyOfRange(zero.getData(), 120, 127);
+        byte[] fmt = Arrays.copyOfRange(zero.getData(), 120, 127);
 
-        if (typeIde[0] != 'C') {
+        System.out.format("Disk format: %c%c%c%c%c%c\n\n", fmt[0], fmt[1], fmt[2], fmt[3], fmt[4], fmt[5]);
+
+        if (fmt[0] != 'C') {
             throw new CromixFloppyException("Not a cromix disk");
         }
 
-        diskSize = typeIde[1] == 'L' ? LARGE : SMALL;
-        diskDensity = typeIde[2] == 'D' ? DOUBLE : SINGLE;
-        diskSides = typeIde[4] == 'D' ? DiskSides.DOUBLE : DiskSides.SINGLE;
+        diskSize = fmt[1] == 'L' ? LARGE : SMALL;
+        diskDensity = fmt[2] == 'D' ? DOUBLE : SINGLE;
+        diskSides = fmt[4] == 'D' ? DiskSides.DOUBLE : DiskSides.SINGLE;
         checkSupported();
 
         info = CromixFloppyInfo.get(diskSize, diskDensity);
@@ -49,7 +51,7 @@ public class CromixFloppyDisk implements DiskInterface {
         new FileSystem(this).extract(path);
     }
 
-    public void writeImage(String fileName) throws IOException {
+    public void writeImage(String fileName, boolean interleaved) throws IOException {
         File file = new File(fileName);
         if (file.exists()) {
             file.delete();
@@ -64,7 +66,8 @@ public class CromixFloppyDisk implements DiskInterface {
                     }
                 } else {
                     for (int i = 0; i < track.getSectorCount(); i++) {
-                        out.write(track.getSector(info.getInterleave()[i] + 1).getData());
+                        int sectorNumber = interleaved ? i + 1 : info.getInterleave()[i] + 1;
+                        out.write(track.getSector(sectorNumber).getData());
                     }
                 }
             }
@@ -97,21 +100,18 @@ public class CromixFloppyDisk implements DiskInterface {
     }
 
     private int getCylinderForBlock(int block) {
-        return (block + (info.getSectorsFirstTrack() - info.getSectorsPerTrack())) / (2 * info.getSectorsPerTrack());
+        return (block + info.getBlockOffset()) / (2 * info.getSectorsPerTrack());
     }
 
     private int getHeadForBlock(int block) {
-        return ((block + (info.getSectorsFirstTrack() - info.getSectorsPerTrack())) / info.getSectorsPerTrack()) % info.getHeads();
+        return ((block + info.getBlockOffset()) / info.getSectorsPerTrack()) % info.getHeads();
     }
 
     private int getSectorForBlock(int block) {
-        return (block + (info.getSectorsFirstTrack() - info.getSectorsPerTrack())) % info.getSectorsPerTrack();
+        return (block + info.getBlockOffset()) % info.getSectorsPerTrack();
     }
 
     private void checkSupported() {
-//        if (diskSize != LARGE) {
-//            throw new RuntimeException(String.format("%s size disks are not supported", diskSize));
-//        }
         if (diskDensity != DOUBLE) {
             throw new RuntimeException(String.format("%s density disks are not supported", diskSize));
         }

@@ -1,6 +1,7 @@
 package au.wildie.m68k.cromixfs.disk.floppy;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
 
 import java.io.File;
@@ -13,12 +14,26 @@ public class CromixFloppyDiskTest {
             //"/home/dwildie/cromemcos/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_KERMIT-S_Release_1_Serial_10204_Kermit_Communications_Software_MOUNT_FORMAT.imd"
             //"/home/dwildie/cromemcos/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus_Disk_1_of_9_BOOTABLE.imd"
             //"/home/dwildie/cromemcos/Cromemco_CS1-D5E/DBASE_FRIDAY.imd"
-            "/home/dwildie/m68000/cromix/848CR162.IMD"
+            "/tmp/mb/848CR162.IMD"
+//            "/tmp/mb/061C3105.IMD"
             ;
     private static final String EXTRACT_PATH = "/tmp/extract";
 
     @Test
     public void dummy() {
+    }
+
+    @Test
+    public void writeImage() throws IOException {
+        File file = new File(TEST_IMAGE);
+        if (!file.exists()) {
+            throw new IllegalArgumentException(String.format("Image file %s does not exist", TEST_IMAGE));
+        }
+
+        String imageFileName = String.format("%s.%s", FilenameUtils.removeExtension(TEST_IMAGE), "img");
+        CromixFloppyDisk floppy = new CromixFloppyDisk(TEST_IMAGE);
+        floppy.writeImage(imageFileName, true);
+        System.out.println("done");
     }
 
     @Test

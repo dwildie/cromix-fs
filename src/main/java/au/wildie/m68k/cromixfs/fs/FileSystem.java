@@ -49,6 +49,7 @@ public class FileSystem {
     private final DiskInterface disk;
 
     private final int inodeFirst;
+    private final int inodeCount;
 
     public FileSystem(DiskInterface disk) {
         this.disk = disk;
@@ -61,6 +62,7 @@ public class FileSystem {
         }
 
         inodeFirst = readWord(superBlock, SUPER_INODE_FIRST_OFFSET);
+        inodeCount = readWord(superBlock, SUPER_INODE_COUNT_OFFSET);
     }
 
 
