@@ -52,6 +52,8 @@ public class FileSystem {
     private final int inodeCount;
 
     public FileSystem(DiskInterface disk) {
+        disk.checkSupported();
+
         this.disk = disk;
 
         byte[] superBlock = disk.getSuperBlock();

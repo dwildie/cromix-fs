@@ -5,9 +5,11 @@ import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
 import au.wildie.m68k.cromixfs.disk.imd.Sector;
 import au.wildie.m68k.cromixfs.disk.imd.Track;
 import au.wildie.m68k.cromixfs.fs.FileSystem;
+import lombok.Getter;
 
 import java.io.*;
 import java.util.Arrays;
+
 
 import static au.wildie.m68k.cromixfs.disk.floppy.DiskDensity.DOUBLE;
 import static au.wildie.m68k.cromixfs.disk.floppy.DiskDensity.SINGLE;
@@ -21,25 +23,37 @@ public class CromixFloppyDisk implements DiskInterface {
     private final DiskDensity diskDensity;
     private final DiskSides diskSides;
     private final CromixFloppyInfo info;
+    @Getter
+    private byte[] formatLabel;
 
-    public CromixFloppyDisk(String fileName) {
-        image = new IMDImage(0, fileName);
+    public CromixFloppyDisk(String fileName, PrintStream out) {
+        image = new IMDImage(0, fileName, out);
 
         Sector zero = image.getSector(0, 0, 1);
-        byte[] fmt = Arrays.copyOfRange(zero.getData(), 120, 127);
+        formatLabel = Arrays.copyOfRange(zero.getData(), 120, 127);
 
-        System.out.format("Disk format: %c%c%c%c%c%c\n\n", fmt[0], fmt[1], fmt[2], fmt[3], fmt[4], fmt[5]);
+        out.format("Disk format: %c%c%c%c%c%c\n\n", formatLabel[0], formatLabel[1], formatLabel[2], formatLabel[3], formatLabel[4], formatLabel[5]);
 
-        if (fmt[0] != 'C') {
+        if (formatLabel[0] != 'C') {
             throw new CromixFloppyException("Not a cromix disk");
         }
 
-        diskSize = fmt[1] == 'L' ? LARGE : SMALL;
-        diskDensity = fmt[2] == 'D' ? DOUBLE : SINGLE;
-        diskSides = fmt[4] == 'D' ? DiskSides.DOUBLE : DiskSides.SINGLE;
-        checkSupported();
-
+        diskSize = formatLabel[1] == 'L' ? LARGE : SMALL;
+        diskDensity = formatLabel[2] == 'D' ? DOUBLE : SINGLE;
+        diskSides = formatLabel[4] == 'D' ? DiskSides.DOUBLE : DiskSides.SINGLE;
         info = CromixFloppyInfo.get(diskSize, diskDensity);
+    }
+
+    public Integer getTrackCount() {
+        return image.getTrackCount();
+    }
+
+    public Integer getTrackCount(int head) {
+        return image.getTrackCount(head);
+    }
+
+    public Integer getSectorErrorCount() {
+        return image.getSectorErrorCount();
     }
 
     public void list(PrintStream out) throws IOException {
@@ -111,12 +125,13 @@ public class CromixFloppyDisk implements DiskInterface {
         return (block + info.getBlockOffset()) % info.getSectorsPerTrack();
     }
 
-    private void checkSupported() {
-        if (diskDensity != DOUBLE) {
-            throw new RuntimeException(String.format("%s density disks are not supported", diskSize));
-        }
-        if (diskSides != DiskSides.DOUBLE) {
-            throw new RuntimeException(String.format("%s sided disks are not supported", diskSides));
-        }
+    @Override
+    public void checkSupported() {
+//        if (diskDensity != DOUBLE) {
+//            throw new RuntimeException(String.format("%s density disks are not supported", diskDensity));
+//        }
+//        if (diskSides != DiskSides.DOUBLE) {
+//            throw new RuntimeException(String.format("%s sided disks are not supported", diskSides));
+//        }
     }
 }

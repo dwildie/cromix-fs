@@ -11,16 +11,22 @@ public class CromixFloppyDiskTest {
     //private static final String SCRATCH_FILE = "/home/dwildie/cromemcos/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_KERMIT-S_Release_1_Serial_10204_Kermit_Communications_Software_MOUNT_FORMAT.imd";
 
     private static final String TEST_IMAGE =
-            //"/home/dwildie/cromemcos/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_KERMIT-S_Release_1_Serial_10204_Kermit_Communications_Software_MOUNT_FORMAT.imd"
-            //"/home/dwildie/cromemcos/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus_Disk_1_of_9_BOOTABLE.imd"
-            //"/home/dwildie/cromemcos/Cromemco_CS1-D5E/DBASE_FRIDAY.imd"
-            "/tmp/mb/848CR162.IMD"
+            "/home/dwildie/cromemcos/HowardHarte/cromemco_imd/FLASHRAM_and_SDI2_Software_Development_05-11-86_Most_Files_Lost_07-19-90.imd"
+//            "/home/dwildie/cromemcos/HowardHarte/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_KERMIT-S_Release_1_Serial_10204_Kermit_Communications_Software_MOUNT_FORMAT.imd"
+            //"/home/dwildie/cromemcos/HowardHarte/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus_Disk_1_of_9_BOOTABLE.imd"
+            //"/home/dwildie/cromemcos/HowardHarte/Cromemco_CS1-D5E/DBASE_FRIDAY.imd"
+            //"/tmp/mb/848CR162.IMD"
 //            "/tmp/mb/061C3105.IMD"
             ;
     private static final String EXTRACT_PATH = "/tmp/extract";
 
     @Test
     public void dummy() {
+    }
+
+    @Test
+    public void scan() throws IOException {
+        new FileScan("/home/dwildie/cromemcos/HowardHarte").scan();
     }
 
     @Test
@@ -31,7 +37,7 @@ public class CromixFloppyDiskTest {
         }
 
         String imageFileName = String.format("%s.%s", FilenameUtils.removeExtension(TEST_IMAGE), "img");
-        CromixFloppyDisk floppy = new CromixFloppyDisk(TEST_IMAGE);
+        CromixFloppyDisk floppy = new CromixFloppyDisk(TEST_IMAGE, System.out);
         floppy.writeImage(imageFileName, true);
         System.out.println("done");
     }
@@ -44,7 +50,7 @@ public class CromixFloppyDiskTest {
             throw new IllegalArgumentException(String.format("Image file %s does not exist", TEST_IMAGE));
         }
 
-        CromixFloppyDisk floppy = new CromixFloppyDisk(TEST_IMAGE);
+        CromixFloppyDisk floppy = new CromixFloppyDisk(TEST_IMAGE, System.out);
         floppy.list(System.out);
         System.out.println("done");
     }
@@ -63,7 +69,7 @@ public class CromixFloppyDiskTest {
         }
         extractDir.mkdirs();
 
-        CromixFloppyDisk floppy = new CromixFloppyDisk(TEST_IMAGE);
+        CromixFloppyDisk floppy = new CromixFloppyDisk(TEST_IMAGE, System.out);
         floppy.extract(EXTRACT_PATH);
         System.out.println("done");
     }

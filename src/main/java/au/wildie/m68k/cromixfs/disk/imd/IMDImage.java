@@ -4,21 +4,35 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 
 public class IMDImage {
     private String header = "";
     private final List<Track> tracks = new ArrayList<>();
 
-    public IMDImage(int driveId, String filePath) {
-        System.out.printf("Reading IMD file %s%n", filePath);
+    private static final int SECTOR_ENCODING_UNAVAILABLE = 0;
+    private static final int SECTOR_ENCODING_NORMAL = 1;
+    private static final int SECTOR_ENCODING_COMPRESSED = 2;
+    private static final int SECTOR_ENCODING_DELETED = 3;
+    private static final int SECTOR_ENCODING_DELETED_COMPRESSED = 4;
+    private static final int SECTOR_ENCODING_ERROR = 5;
+    private static final int SECTOR_ENCODING_ERROR_COMPRESSED = 6;
+    private static final int SECTOR_ENCODING_DELETED_ERROR = 7;
+    private static final int SECTOR_ENCODING_DELETED_ERROR_COMPRESSED = 8;
+
+    private static final Set<Integer> SECTOR_ENCODING_VALID = new HashSet<>(Arrays.asList(
+            SECTOR_ENCODING_NORMAL,
+            SECTOR_ENCODING_COMPRESSED,
+            SECTOR_ENCODING_DELETED,
+            SECTOR_ENCODING_DELETED_COMPRESSED));
+
+    public IMDImage(int driveId, String filePath, PrintStream out) {
+        out.printf("Reading IMD file %s%n", filePath);
 
         File imdFile = new File(filePath);
         if (!imdFile.exists()) {
-            System.out.printf("Drive %d: IMD file %s does not exist%n", driveId, imdFile.getPath());
+            out.printf("Drive %d: IMD file %s does not exist%n", driveId, imdFile.getPath());
             return;
         }
 
@@ -51,6 +65,8 @@ public class IMDImage {
             track.setSectorSize(decodeSectorSize(raw[index++]));
             track.setOffset(offset);
 
+            //out.printf("C=%d, H=%d, Sectors=%d, SectorSize=%d\n", track.getCylinder(), track.getHead(), track.getSectorCount(), track.getSectorSize());
+
             // Sector number map
             int[] sectorMap = new int[track.getSectorCount()];
             for (int i = 0; i < sectorMap.length; i++) {
@@ -66,26 +82,56 @@ public class IMDImage {
                 sector.setEncoding(raw[index++]);
                 sector.setOffset(offset);
 
-                if (sector.getEncoding() == 1) {
+                if (sector.getEncoding() == SECTOR_ENCODING_UNAVAILABLE) {
+                    out.printf("Sector could not be read: cylinder %d, head %d, sector %d\n", track.getCylinder(), track.getHead(), sector.getNumber());
+                } else if (sector.getEncoding() == SECTOR_ENCODING_NORMAL) {
                     // Normal data
                     for (int j = 0; j < track.getSectorSize(); j++) {
                         sector.getData()[j] = raw[index++];
                     }
-                } else if (sector.getEncoding() == 2) {
+                } else if (sector.getEncoding() == SECTOR_ENCODING_COMPRESSED) {
+                    // Compressed data
                     byte value = raw[index++];
                     for (int j = 0; j < track.getSectorSize(); j++) {
                         sector.getData()[j] = value;
                     }
-                    sector.setEncoding(1);
-                } else if (sector.getEncoding() == 5) {
-                    // Normal data with read errors
-                    System.out.printf("Error: cylinder %d, head %d, sector %d%n", track.getCylinder(), track.getHead(), sector.getNumber());
+                } else if (sector.getEncoding() == SECTOR_ENCODING_DELETED) {
+                    // Deleted data
                     for (int j = 0; j < track.getSectorSize(); j++) {
                         sector.getData()[j] = raw[index++];
                     }
-
+                } else if (sector.getEncoding() == SECTOR_ENCODING_DELETED_COMPRESSED) {
+                    // Deleted compressed data
+                    byte value = raw[index++];
+                    for (int j = 0; j < track.getSectorSize(); j++) {
+                        sector.getData()[j] = value;
+                    }
+                } else if (sector.getEncoding() == SECTOR_ENCODING_ERROR) {
+                    // Data with read errors
+                    out.printf("Sector errors: cylinder %d, head %d, sector %d\n", track.getCylinder(), track.getHead(), sector.getNumber());
+                    for (int j = 0; j < track.getSectorSize(); j++) {
+                        sector.getData()[j] = raw[index++];
+                    }
+                } else if (sector.getEncoding() == SECTOR_ENCODING_ERROR_COMPRESSED) {
+                    // Compressed data with read errors
+                    byte value = raw[index++];
+                    for (int j = 0; j < track.getSectorSize(); j++) {
+                        sector.getData()[j] = value;
+                    }
+                } else if (sector.getEncoding() == SECTOR_ENCODING_DELETED_ERROR) {
+                    // Deleted data with read errors
+                    out.printf("Deleted sector errors: cylinder %d, head %d, sector %d\n", track.getCylinder(), track.getHead(), sector.getNumber());
+                    for (int j = 0; j < track.getSectorSize(); j++) {
+                        sector.getData()[j] = raw[index++];
+                    }
+                } else if (sector.getEncoding() == SECTOR_ENCODING_DELETED_ERROR_COMPRESSED) {
+                    // Compressed deleted data with read errors
+                    byte value = raw[index++];
+                    for (int j = 0; j < track.getSectorSize(); j++) {
+                        sector.getData()[j] = value;
+                    }
                 } else {
-                    throw new ImageException(String.format("Unexpected sector encoding: 0x%02x",sector.getEncoding()));
+                    out.printf("Unexpected sector encoding: cylinder %d, head %d, sector %d, encoding%d\n", track.getCylinder(), track.getHead(), sector.getNumber(), sector.getEncoding());
                 }
                 track.getSectors().add(sector);
 
@@ -94,9 +140,10 @@ public class IMDImage {
 
             tracks.add(track);
         }
-        System.out.println(header);
-        System.out.printf("Read %d tracks%n", tracks.size());
+        out.println(header);
+        out.printf("Read %d tracks%n", tracks.size());
     }
+
 
     public void persist(File imdFile) {
         if (imdFile.exists()) {
@@ -228,6 +275,19 @@ public class IMDImage {
 
     public int getTrackCount() {
         return tracks.size();
+    }
+
+    public Integer getTrackCount(int head) {
+        return new Long(tracks.stream()
+                .filter(track -> track.getHead() == head)
+                .count()).intValue();
+    }
+
+    public Integer getSectorErrorCount() {
+        return (int)tracks.stream()
+                .flatMap(track -> track.getSectors().stream())
+                .filter(sector -> !SECTOR_ENCODING_VALID.contains(sector.getEncoding()))
+                .count();
     }
 
     private int decodeSectorSize(int value) {

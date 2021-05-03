@@ -76,6 +76,10 @@ public class CromixStDisk implements DiskInterface {
         return media[c][h][s];
     }
 
+    public void checkSupported() {
+        // yes
+    }
+
     private int getCylinderForBlock(int unit, int block) {
         return block / (info.getSurfaceCount() * info.getSectorsPerTrack()) + getStartingCylinder(unit);
     }
