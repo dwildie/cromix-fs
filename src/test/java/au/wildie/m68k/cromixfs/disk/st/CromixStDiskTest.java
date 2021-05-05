@@ -43,7 +43,7 @@ public class CromixStDiskTest {
         extractDir.mkdirs();
 
         CromixStDisk stDisk = new CromixStDisk(SCRATCH_FILE);
-        stDisk.extract(EXTRACT_PATH);
+        stDisk.extract(EXTRACT_PATH, System.out);
         System.out.println("done");
     }
 }

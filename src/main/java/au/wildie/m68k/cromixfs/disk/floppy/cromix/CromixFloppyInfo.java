@@ -1,12 +1,12 @@
-package au.wildie.m68k.cromixfs.disk.floppy;
+package au.wildie.m68k.cromixfs.disk.floppy.cromix;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import static au.wildie.m68k.cromixfs.disk.floppy.DiskDensity.DOUBLE;
-import static au.wildie.m68k.cromixfs.disk.floppy.DiskDensity.SINGLE;
-import static au.wildie.m68k.cromixfs.disk.floppy.DiskSize.LARGE;
-import static au.wildie.m68k.cromixfs.disk.floppy.DiskSize.SMALL;
+import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskDensity.DOUBLE;
+import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskDensity.SINGLE;
+import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskSize.LARGE;
+import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskSize.SMALL;
 
 @Getter
 @AllArgsConstructor
@@ -17,7 +17,7 @@ public class CromixFloppyInfo {
     private static final byte[] x5d = {0,4,8,2,6,1,5,9,3,7};                   /* Cromix 5" DD */
     private static final byte[] x5s = {0,2,4,1,3};                             /* Cromix 5" SD */
 
-    private final int tracks;
+    private final int cylinders;
     private final int heads;
     private final int sectorsPerTrack;
     private final int sectorsFirstTrack;
@@ -25,7 +25,7 @@ public class CromixFloppyInfo {
     private final int blockOffset;
     private final byte[] interleave;
 
-    public static CromixFloppyInfo get(DiskSize diskSize, DiskDensity  diskDensity) {
+    public static CromixFloppyInfo get(DiskSize diskSize, DiskSides diskSides, DiskDensity  diskDensity) {
         if (diskSize == LARGE) {
             if (diskDensity == DOUBLE) {
                 // First track: 26 * 128 = 3328 bytes, 0x0D00
@@ -50,6 +50,6 @@ public class CromixFloppyInfo {
                 return new CromixFloppyInfo(40, 2,  5, 18, 512, 13, x5s);
             }
         }
-        throw new CromixFloppyException(String.format("Unsupported disk format: size %s, density %s", diskSize, diskDensity));
+        throw new IMDFloppyException(String.format("Unsupported Cromix disk format: size %s, sides %s, density %s", diskSize, diskSides, diskDensity));
     }
 }
