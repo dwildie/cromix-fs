@@ -6,6 +6,7 @@ import lombok.Getter;
 import java.io.*;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Date;
 
 import static au.wildie.m68k.cromixfs.fs.DumpMode.EXTRACT;
 import static au.wildie.m68k.cromixfs.fs.DumpMode.LIST;
@@ -214,7 +215,13 @@ public class CromixFileSystem implements FileSystem {
             out.flush();
         } finally {
             try {
-                file.setLastModified(modified.toDate().getTime());
+                if (modified.toDate().before(new Date())) {
+                    try {
+                        file.setLastModified(modified.toDate().getTime());
+                    } catch (IllegalArgumentException e) {
+                        //
+                    }
+                }
             } catch (ParseException e) {
                 //
             }

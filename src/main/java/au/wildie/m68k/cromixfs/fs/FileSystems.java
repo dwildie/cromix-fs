@@ -6,7 +6,10 @@ import au.wildie.m68k.cromixfs.disk.floppy.cromix.CromixFloppyDisk;
 import au.wildie.m68k.cromixfs.disk.floppy.cromix.IMDFloppyException;
 import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
 import au.wildie.m68k.cromixfs.disk.imd.Sector;
+import au.wildie.m68k.cromixfs.disk.st.CromixStDisk;
+import au.wildie.m68k.cromixfs.disk.st.STDiskException;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.util.Arrays;
 
@@ -31,5 +34,11 @@ public class FileSystems {
         }
 
         throw new IMDFloppyException(String.format("Unrecognised disk, format label: \"%s\"", formatLabel));
+    }
+
+    public static FileSystem getSTFileSystem(String fileName, PrintStream out) throws STDiskException {
+        CromixStDisk stDisk = new CromixStDisk(fileName);
+        FileSystem fs = new CromixFileSystem(stDisk);
+        return fs;
     }
 }
