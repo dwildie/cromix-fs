@@ -1,5 +1,6 @@
 package au.wildie.m68k.cromixfs.disk.floppy;
 
+import au.wildie.m68k.cromixfs.fs.CDOSFileSystem;
 import au.wildie.m68k.cromixfs.fs.FileSystem;
 import au.wildie.m68k.cromixfs.fs.FileSystems;
 import org.apache.commons.io.FileUtils;
@@ -9,16 +10,14 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
-public class CromixFloppyDiskTest {
-    //private static final String SCRATCH_FILE = "/home/dwildie/cromemcos/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_KERMIT-S_Release_1_Serial_10204_Kermit_Communications_Software_MOUNT_FORMAT.imd";
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.MatcherAssert.assertThat;
 
+
+
+public class CDOSFloppyDiskTest {
     private static final String TEST_IMAGE =
-//            "/home/dwildie/cromemcos/HowardHarte/cromemco_imd/FLASHRAM_and_SDI2_Software_Development_05-11-86_Most_Files_Lost_07-19-90.imd"
-//            "/home/dwildie/cromemcos/HowardHarte/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_KERMIT-S_Release_1_Serial_10204_Kermit_Communications_Software_MOUNT_FORMAT.imd"
-            //"/home/dwildie/cromemcos/HowardHarte/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus_Disk_1_of_9_BOOTABLE.imd"
-            //"/home/dwildie/cromemcos/HowardHarte/Cromemco_CS1-D5E/DBASE_FRIDAY.imd"
-            //"/tmp/mb/848CR162.IMD"
-            "/tmp/mb/061C3105.IMD"
+            "/home/dwildie/cromemcos/m/cromemco/code/disks/005C0254.IMD"
             ;
     private static final String EXTRACT_PATH = "/tmp/extract";
 
@@ -38,9 +37,12 @@ public class CromixFloppyDiskTest {
             throw new IllegalArgumentException(String.format("Image file %s does not exist", TEST_IMAGE));
         }
 
-        String imageFileName = String.format("%s.%s", FilenameUtils.removeExtension(TEST_IMAGE), "img");
         FileSystem fs = FileSystems.getFloppyFileSystem(TEST_IMAGE, System.out);
+        assertThat(fs, instanceOf(CDOSFileSystem.class));
+
+        String imageFileName = String.format("%s.%s", FilenameUtils.removeExtension(TEST_IMAGE), "img");
         fs.getDisk().writeImage(imageFileName, true);
+
         System.out.println("done");
     }
 
@@ -53,11 +55,13 @@ public class CromixFloppyDiskTest {
         }
 
         FileSystem fs = FileSystems.getFloppyFileSystem(TEST_IMAGE, System.out);
+        assertThat(fs, instanceOf(CDOSFileSystem.class));
+
         fs.list(System.out);
-        System.out.println("done");
+        System.out.print("\ndone\n");
     }
 
-    @Test
+//    @Test
     public void extract() throws IOException {
 
         File imdFile = new File(TEST_IMAGE);

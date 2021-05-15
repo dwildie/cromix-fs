@@ -1,7 +1,9 @@
 package au.wildie.m68k;
 
-import au.wildie.m68k.cromixfs.disk.floppy.CromixFloppyDisk;
 import au.wildie.m68k.cromixfs.disk.floppy.FileScan;
+import au.wildie.m68k.cromixfs.disk.st.STDiskException;
+import au.wildie.m68k.cromixfs.fs.FileSystems;
+import au.wildie.m68k.cromixfs.fs.FileSystem;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,19 +14,25 @@ import java.io.IOException;
  */
 public class App 
 {
-    public static void main( String[] args ) throws IOException {
+    public static void main( String[] args ) throws IOException, STDiskException {
         if (args.length == 2 && args[0].equalsIgnoreCase("-l")) {
             if (!new File(args[1]).exists()) {
-                System.out.printf("Cannot open IMD file %s\n", args[1]);
+                System.out.printf("Cannot open image file %s\n", args[1]);
                 return;
             }
 
-            CromixFloppyDisk floppy = new CromixFloppyDisk(args[1], System.out);
-            floppy.list(System.out);
+            FileSystem fs;
+            if (args[1].toLowerCase().trim().endsWith(".imd")) {
+                fs = FileSystems.getFloppyFileSystem(args[1], System.out);
+            } else {
+                fs = FileSystems.getSTFileSystem(args[1], System.out);
+            }
+            fs.list(System.out);
             return;
+
         } else if (args.length == 3 && args[0].equalsIgnoreCase("-x")) {
             if (!new File(args[1]).exists()) {
-                System.out.printf("Cannot open IMD file %s\n", args[1]);
+                System.out.printf("Cannot open image file %s\n", args[1]);
                 return;
             }
 
@@ -33,8 +41,14 @@ public class App
                 target.mkdirs();
             }
 
-            CromixFloppyDisk floppy = new CromixFloppyDisk(args[1], System.out);
-            floppy.extract(args[2]);
+            FileSystem fs;
+            if (args[1].toLowerCase().trim().endsWith(".imd")) {
+                fs = FileSystems.getFloppyFileSystem(args[1], System.out);
+            } else {
+                fs = FileSystems.getSTFileSystem(args[1], System.out);
+            }
+
+            fs.extract(args[2], System.out);
             return;
         } else if (args.length == 2 && args[0].equalsIgnoreCase("-s")) {
             if (!new File(args[1]).exists()) {
