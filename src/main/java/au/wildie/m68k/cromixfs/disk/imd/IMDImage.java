@@ -266,7 +266,7 @@ public class IMDImage {
                 .flatMap(track -> track.getSectors().stream())
                 .filter(sector -> sector.getNumber() == sectorNumber)
                 .findFirst()
-                .orElseThrow(() -> new ImageException(String .format("Cannot find cylinder %d, head %d, sector %d", cylinderNumber, headNumber, sectorNumber)));
+                .orElseThrow(() -> new ImageException(String .format("Cannot find cylinder %d, head %d, sector %d.", cylinderNumber, headNumber, sectorNumber)));
     }
 
     public List<Track> getTracks() {

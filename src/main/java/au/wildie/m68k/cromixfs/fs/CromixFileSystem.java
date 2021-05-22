@@ -1,6 +1,7 @@
 package au.wildie.m68k.cromixfs.fs;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
+import au.wildie.m68k.cromixfs.disk.imd.ImageException;
 import lombok.Getter;
 
 import java.io.*;
@@ -213,6 +214,8 @@ public class CromixFileSystem implements FileSystem {
             }
 
             out.flush();
+        } catch (ImageException e) {
+            System.out.printf("Error extracting file %s, only %d bytes of %d bytes extracted. %s\n", path, size - remainingBytes, size, e.getMessage());
         } finally {
             try {
                 if (modified.toDate().before(new Date())) {
