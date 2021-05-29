@@ -1,14 +1,20 @@
 package au.wildie.m68k.cromixfs.disk.imd;
 
+import lombok.Getter;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static java.lang.Integer.max;
 
+@Getter
 public class IMDImage {
     private String header = "";
+    private int heads= -1;
+    private int cylinders= -1;
     private final List<Track> tracks = new ArrayList<>();
 
     private static final int SECTOR_ENCODING_UNAVAILABLE = 0;
@@ -27,23 +33,24 @@ public class IMDImage {
             SECTOR_ENCODING_DELETED,
             SECTOR_ENCODING_DELETED_COMPRESSED));
 
-    public IMDImage(int driveId, String filePath, PrintStream out) {
-        out.printf("Reading IMD file %s%n", filePath);
+    public static IMDImage fromFile(int driveId, String filePath, PrintStream out) throws IOException {
+        return fromFile(driveId, new File(filePath), out);
+    }
 
-        File imdFile = new File(filePath);
+    public static IMDImage fromFile(int driveId, File imdFile, PrintStream out) throws IOException {
+        out.printf("Reading IMD file %s%n", imdFile.getPath());
+
         if (!imdFile.exists()) {
             out.printf("Drive %d: IMD file %s does not exist%n", driveId, imdFile.getPath());
-            return;
+            throw new ImageException(String.format("Drive %d: IMD file %s does not exist%n", driveId, imdFile.getPath()));
         }
 
-        byte[] raw;
         try (InputStream src = new FileInputStream(imdFile)) {
-            raw = new byte[(int) imdFile.length()];
-            src.read(raw);
-        } catch (IOException e) {
-            throw new ImageException(String.format("Drive %d: error reading IMD file %s", driveId, imdFile.getPath()), e);
+            return new IMDImage(IOUtils.toByteArray(src), out);
         }
+    }
 
+    public IMDImage(byte[] raw, PrintStream out) {
         int index = 0;
 
         // Read the header
@@ -64,6 +71,9 @@ public class IMDImage {
             track.setSectorCount(raw[index++]);
             track.setSectorSize(decodeSectorSize(raw[index++]));
             track.setOffset(offset);
+
+            heads = max(heads, track.getHead());
+            cylinders = max(cylinders, track.getCylinder());
 
             //out.printf("C=%d, H=%d, Sectors=%d, SectorSize=%d\n", track.getCylinder(), track.getHead(), track.getSectorCount(), track.getSectorSize());
 
@@ -140,10 +150,19 @@ public class IMDImage {
 
             tracks.add(track);
         }
+
+        heads++;
+        cylinders++;
+
         out.println(header);
         out.printf("Read %d tracks%n", tracks.size());
     }
 
+    public int size() {
+        return tracks.stream()
+                .mapToInt(track -> track.getSectorCount() * track.getSectorSize())
+                .sum();
+    }
 
     public void persist(File imdFile) {
         if (imdFile.exists()) {
@@ -267,10 +286,6 @@ public class IMDImage {
                 .filter(sector -> sector.getNumber() == sectorNumber)
                 .findFirst()
                 .orElseThrow(() -> new ImageException(String .format("Cannot find cylinder %d, head %d, sector %d.", cylinderNumber, headNumber, sectorNumber)));
-    }
-
-    public List<Track> getTracks() {
-        return tracks;
     }
 
     public int getTrackCount() {

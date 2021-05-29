@@ -1,9 +1,11 @@
 package au.wildie.m68k;
 
 import au.wildie.m68k.cromixfs.disk.floppy.FileScan;
+import au.wildie.m68k.cromixfs.disk.floppy.vfd.VFDConverter;
 import au.wildie.m68k.cromixfs.disk.st.STDiskException;
 import au.wildie.m68k.cromixfs.fs.FileSystems;
 import au.wildie.m68k.cromixfs.fs.FileSystem;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,6 +59,12 @@ public class App
             }
             new FileScan(args[1]).scan();
             return;
+        } else if (args.length >= 2 && args[0].equalsIgnoreCase("-v")) {
+            File imdFile = new File(args[1]);
+            File vfdFile = new File(args.length == 3 ? args[2] : FilenameUtils.removeExtension(imdFile.getPath()) + ".vfd");
+            VFDConverter.imdToVfd(imdFile, vfdFile);
+            System.out.printf("VFD image saved in %s\n", vfdFile.getPath());
+            return;
         }
 
         showUsage();
@@ -65,6 +73,7 @@ public class App
     private static void showUsage() {
         System.out.println("java -jar archive.jar -l file.imd ");
         System.out.println("java -jar archive.jar -x file.imd path");
+        System.out.println("java -jar archive.jar -v file.imd path");
         System.out.println("java -jar archive.jar -s path");
     }
 }

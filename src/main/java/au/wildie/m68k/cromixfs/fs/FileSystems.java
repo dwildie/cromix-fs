@@ -9,13 +9,13 @@ import au.wildie.m68k.cromixfs.disk.imd.Sector;
 import au.wildie.m68k.cromixfs.disk.st.CromixStDisk;
 import au.wildie.m68k.cromixfs.disk.st.STDiskException;
 
-import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
 
 public class FileSystems {
-    public static FileSystem getFloppyFileSystem(String fileName, PrintStream out) {
-        IMDImage image = new IMDImage(0, fileName, out);
+    public static FileSystem getFloppyFileSystem(String fileName, PrintStream out) throws IOException {
+        IMDImage image = IMDImage.fromFile(0, fileName, out);
 
         Sector zero = image.getSector(0, 0, 1);
         String formatLabel = new String(Arrays.copyOfRange(zero.getData(), 120, 127)).replaceAll("\\P{InBasic_Latin}", "");
@@ -37,8 +37,6 @@ public class FileSystems {
     }
 
     public static FileSystem getSTFileSystem(String fileName, PrintStream out) throws STDiskException {
-        CromixStDisk stDisk = new CromixStDisk(fileName);
-        FileSystem fs = new CromixFileSystem(stDisk);
-        return fs;
+        return new CromixFileSystem(new CromixStDisk(fileName));
     }
 }

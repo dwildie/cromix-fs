@@ -18,7 +18,7 @@ public class CromixFloppyDiskTest {
             //"/home/dwildie/cromemcos/HowardHarte/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus_Disk_1_of_9_BOOTABLE.imd"
             //"/home/dwildie/cromemcos/HowardHarte/Cromemco_CS1-D5E/DBASE_FRIDAY.imd"
             //"/tmp/mb/848CR162.IMD"
-            "/tmp/mb/061C3105.IMD"
+            "/tmp/mb/326FLASH.IMD"
             ;
     private static final String EXTRACT_PATH = "/tmp/extract";
 
