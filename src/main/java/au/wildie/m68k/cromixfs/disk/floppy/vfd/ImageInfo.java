@@ -1,3 +1,4 @@
+
 package au.wildie.m68k.cromixfs.disk.floppy.vfd;
 
 import au.wildie.m68k.cromixfs.utils.Int68000;
@@ -12,8 +13,9 @@ import java.io.IOException;
 @Getter
 @RequiredArgsConstructor
 public class ImageInfo {
-    public static final int SIZE = 8 + 2 * TrackInfo.SIZE;
-
+    public static final int SIZE = 4 + 4 + 4 + 2 * TrackInfo.SIZE;
+    public final int MAJOR_VERSION = 0;
+    public final int MINOR_VERSION = 1;
     private final int cylinders;
     private final int heads;
     private TrackInfo first;
@@ -21,8 +23,12 @@ public class ImageInfo {
 
     public byte[] toBytes() throws IOException {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        bytes.write(Int68000.toBytes(cylinders));
-        bytes.write(Int68000.toBytes(heads));
+        bytes.write("VFD".getBytes());
+        bytes.write(new byte[]{0});
+        bytes.write(Int68000.to2Bytes(MAJOR_VERSION));
+        bytes.write(Int68000.to2Bytes(MINOR_VERSION));
+        bytes.write(Int68000.to2Bytes(cylinders));
+        bytes.write(Int68000.to2Bytes(heads));
         bytes.write(first.toBytes());
         bytes.write(rest.toBytes());
         return bytes.toByteArray();
