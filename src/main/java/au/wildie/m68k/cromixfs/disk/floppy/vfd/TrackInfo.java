@@ -12,7 +12,10 @@ import java.io.IOException;
 @Getter
 @RequiredArgsConstructor
 public class TrackInfo {
-    public static final int SIZE = 6;
+    public static final int SIZE
+            = 2  // sectors
+            + 2  // sectorBytes
+            + 2; // offset
 
     private final int sectors;
     private final int sectorBytes;

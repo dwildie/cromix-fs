@@ -39,6 +39,35 @@ public class VFDImageTest {
         assertThat(vfdImage.getInfo().getRest().getOffset(), is(ImageInfo.SIZE + vfdImage.getInfo().getFirst().size()));
     }
 
+    @Test
+    public void read() throws IOException {
+        InputStream imdFile = this.getClass().getClassLoader().getResourceAsStream("imd/848CR162.IMD");
+        assertThat(imdFile, notNullValue());
+
+        IMDImage imdImage = new IMDImage(IOUtils.toByteArray(imdFile), System.out);
+        assertThat(imdImage, notNullValue());
+
+        VFDImage vfdImage = VFDImage.from(imdImage);
+        assertThat(vfdImage, notNullValue());
+
+        imdImage.getTracks().forEach(track -> track.getSectors().forEach(sector -> {
+                String desc = String.format("cyl=%d, head=%d, sector=%d: ", track.getCylinder(), track.getHead(), sector.getNumber() - 1);
+
+                byte[] imdData = sector.getData();
+                byte[] vfdData = null;
+                try {
+                    vfdData = vfdImage.read(track.getCylinder(), track.getHead(), sector.getNumber() - 1);
+                } catch (IOException e) {
+                    assertThat(desc + e.getMessage(), vfdData, is(not(anything())));
+                }
+                assertThat(desc + "imdData should not be null", imdData, notNullValue());
+                assertThat(desc + "vfdData should not be null", vfdData, notNullValue());
+                assertThat(desc + "sectors should be the same size", vfdData.length, is(imdData.length));
+                for (int i = 0; i < imdData.length; i++) {
+                    assertThat(desc + String.format("byte[%d] is different", i), vfdData[i], is(imdData[i]));
+                }
+        }));
+    }
 
     @Test
     public void toBytes() throws IOException {

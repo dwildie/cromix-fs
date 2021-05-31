@@ -5,6 +5,7 @@ import au.wildie.m68k.cromixfs.disk.imd.Sector;
 import au.wildie.m68k.cromixfs.disk.imd.Track;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -52,5 +53,23 @@ public class VFDImage {
         image.write(info.toBytes());
         image.write(data);
         return image.toByteArray();
+    }
+
+    public byte[] read(int cylinder, int head, int sector) throws IOException {
+        TrackInfo track;
+        int offset;
+        if (cylinder == 0 && head == 0) {
+            // First track
+            track = info.getFirst();
+            offset = track.getOffset() + sector * track.getSectorBytes();
+        } else {
+            // Remaining tracks
+            track = info.getRest();
+            offset = track.getOffset() + (cylinder * info.getHeads() + head - 1) * (track.getSectors() * track.getSectorBytes()) + sector * track.getSectorBytes();
+        }
+        System.out.printf("cyl[%2d], head[%d], sector[%2d]: offset=%d (0x%x)\n", cylinder, head, sector, offset, offset);
+        byte[] readData = new byte[track.getSectorBytes()];
+        System.arraycopy(toBytes(), offset, readData, 0, track.getSectorBytes());
+        return readData;
     }
 }

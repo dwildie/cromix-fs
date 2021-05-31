@@ -13,7 +13,11 @@ import java.io.IOException;
 @Getter
 @RequiredArgsConstructor
 public class ImageInfo {
-    public static final int SIZE = 4 + 4 + 4 + 2 * TrackInfo.SIZE;
+    public static final int SIZE
+            = 4 // "VFD" + null
+            + 4 // Major & minor version
+            + 4 // Cylinders & heads
+            + 2 * TrackInfo.SIZE;
     public final int MAJOR_VERSION = 0;
     public final int MINOR_VERSION = 1;
     private final int cylinders;
