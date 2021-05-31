@@ -31,12 +31,12 @@ public class VFDImageTest {
         assertThat(vfdImage.getInfo().getFirst(), notNullValue());
         assertThat(vfdImage.getInfo().getFirst().getSectors(), is(26));
         assertThat(vfdImage.getInfo().getFirst().getSectorBytes(), is(128));
-        assertThat(vfdImage.getInfo().getFirst().getOffset(), is(TrackInfo.SIZE));
+        assertThat(vfdImage.getInfo().getFirst().getOffset(), is(ImageInfo.SIZE));
 
         assertThat(vfdImage.getInfo().getRest(), notNullValue());
         assertThat(vfdImage.getInfo().getRest().getSectors(), is(16));
         assertThat(vfdImage.getInfo().getRest().getSectorBytes(), is(512));
-        assertThat(vfdImage.getInfo().getRest().getOffset(), is(TrackInfo.SIZE + vfdImage.getInfo().getFirst().size()));
+        assertThat(vfdImage.getInfo().getRest().getOffset(), is(ImageInfo.SIZE + vfdImage.getInfo().getFirst().size()));
     }
 
 
