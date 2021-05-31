@@ -61,7 +61,7 @@ public class CromixFileSystem implements FileSystem {
     private final int inodeFirst;
     private final int inodeCount;
 
-    public CromixFileSystem(DiskInterface disk) {
+    public CromixFileSystem(DiskInterface disk) throws IOException {
         disk.checkSupported();
 
         this.disk = disk;
@@ -265,7 +265,7 @@ public class CromixFileSystem implements FileSystem {
         return remainingBytes;
     }
 
-    private byte[] readINode(int inodeNumber) {
+    private byte[] readINode(int inodeNumber) throws IOException {
         int blockNumber = inodeFirst + (inodeNumber - 1) / 4;
         byte[] block = disk.getBlock(blockNumber);
         int startInode = ((inodeNumber - 1) % 4) * INODE_LENGTH;

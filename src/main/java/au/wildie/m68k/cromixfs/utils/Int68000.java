@@ -10,4 +10,10 @@ public class Int68000 {
     public static byte[] to2Bytes(int i) {
         return ByteBuffer.allocate(2).order(ByteOrder.BIG_ENDIAN).putShort((short)i).array();
     }
+    public static int from2Bytes(byte[] data) {
+        return ByteBuffer.wrap(data).order(ByteOrder.BIG_ENDIAN).getShort();
+    }
+    public static int from2Bytes(byte[] data, int offset) {
+        return ByteBuffer.wrap(data).order(ByteOrder.BIG_ENDIAN).getShort(offset);
+    }
 }

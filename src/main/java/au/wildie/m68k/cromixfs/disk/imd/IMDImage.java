@@ -46,8 +46,12 @@ public class IMDImage {
         }
 
         try (InputStream src = new FileInputStream(imdFile)) {
-            return new IMDImage(IOUtils.toByteArray(src), out);
+            return fromStream(src, out);
         }
+    }
+
+    public static IMDImage fromStream(InputStream imdStream, PrintStream out) throws IOException {
+        return new IMDImage(IOUtils.toByteArray(imdStream), out);
     }
 
     public IMDImage(byte[] raw, PrintStream out) {
@@ -91,6 +95,7 @@ public class IMDImage {
                 sector.setNumber(sectorMap[i]);
                 sector.setEncoding(raw[index++]);
                 sector.setOffset(offset);
+                sector.setSrcOffset(index);
 
                 if (sector.getEncoding() == SECTOR_ENCODING_UNAVAILABLE) {
                     out.printf("Sector could not be read: cylinder %d, head %d, sector %d\n", track.getCylinder(), track.getHead(), sector.getNumber());

@@ -1,4 +1,4 @@
-package au.wildie.m68k.cromixfs.disk.floppy.vfd;
+package au.wildie.m68k.cromixfs.disk.vfd;
 
 import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
 import org.apache.commons.io.IOUtils;
@@ -51,12 +51,16 @@ public class VFDImageTest {
         assertThat(vfdImage, notNullValue());
 
         imdImage.getTracks().forEach(track -> track.getSectors().forEach(sector -> {
-                String desc = String.format("cyl=%d, head=%d, sector=%d: ", track.getCylinder(), track.getHead(), sector.getNumber() - 1);
+                String desc = String.format("cyl=%2d, head=%d, sector=%2d: ", track.getCylinder(), track.getHead(), sector.getNumber() - 1);
+                System.out.printf("%soffsets: IMD=0x%x, VFD=0x%x\n",
+                        desc,
+                        sector.getSrcOffset(),
+                        vfdImage.getTrackAndOffset(track.getCylinder(), track.getHead(), sector.getNumber()).getRight());
 
                 byte[] imdData = sector.getData();
                 byte[] vfdData = null;
                 try {
-                    vfdData = vfdImage.read(track.getCylinder(), track.getHead(), sector.getNumber() - 1);
+                    vfdData = vfdImage.read(track.getCylinder(), track.getHead(), sector.getNumber());
                 } catch (IOException e) {
                     assertThat(desc + e.getMessage(), vfdData, is(not(anything())));
                 }
