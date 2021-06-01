@@ -9,7 +9,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
-public class CromixFloppyDiskTest {
+public class CromixIMDFloppyDiskTest {
     //private static final String SCRATCH_FILE = "/home/dwildie/cromemcos/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_KERMIT-S_Release_1_Serial_10204_Kermit_Communications_Software_MOUNT_FORMAT.imd";
 
     private static final String TEST_IMAGE =
@@ -39,7 +39,7 @@ public class CromixFloppyDiskTest {
         }
 
         String imageFileName = String.format("%s.%s", FilenameUtils.removeExtension(TEST_IMAGE), "img");
-        FileSystem fs = FileSystems.getFloppyFileSystem(TEST_IMAGE, System.out);
+        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
         fs.getDisk().writeImage(imageFileName, true);
         System.out.println("done");
     }
@@ -52,7 +52,7 @@ public class CromixFloppyDiskTest {
             throw new IllegalArgumentException(String.format("Image file %s does not exist", TEST_IMAGE));
         }
 
-        FileSystem fs = FileSystems.getFloppyFileSystem(TEST_IMAGE, System.out);
+        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
         fs.list(System.out);
         System.out.println("done");
     }
@@ -71,7 +71,7 @@ public class CromixFloppyDiskTest {
         }
         extractDir.mkdirs();
 
-        FileSystem fs = FileSystems.getFloppyFileSystem(TEST_IMAGE, System.out);
+        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
         fs.extract(EXTRACT_PATH, System.out);
         System.out.println("done");
     }

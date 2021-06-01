@@ -82,7 +82,7 @@ public class FileScan {
         Info info = new Info(getRelativePath(parent, file.getName()));
 
         try {
-            FileSystem fs = FileSystems.getFloppyFileSystem(file.getAbsolutePath(), out);
+            FileSystem fs = FileSystems.getIMDFloppyFileSystem(file.getAbsolutePath(), out);
             DiskInterface disk = fs.getDisk();
             info.setFormatLabel(disk.getFormatLabel());
             info.setTracks(disk.getTrackCount());

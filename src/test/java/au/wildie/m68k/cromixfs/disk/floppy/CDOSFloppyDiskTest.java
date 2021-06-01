@@ -37,7 +37,7 @@ public class CDOSFloppyDiskTest {
             throw new IllegalArgumentException(String.format("Image file %s does not exist", TEST_IMAGE));
         }
 
-        FileSystem fs = FileSystems.getFloppyFileSystem(TEST_IMAGE, System.out);
+        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
         assertThat(fs, instanceOf(CDOSFileSystem.class));
 
         String imageFileName = String.format("%s.%s", FilenameUtils.removeExtension(TEST_IMAGE), "img");
@@ -54,7 +54,7 @@ public class CDOSFloppyDiskTest {
             throw new IllegalArgumentException(String.format("Image file %s does not exist", TEST_IMAGE));
         }
 
-        FileSystem fs = FileSystems.getFloppyFileSystem(TEST_IMAGE, System.out);
+        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
         assertThat(fs, instanceOf(CDOSFileSystem.class));
 
         fs.list(System.out);
@@ -75,7 +75,7 @@ public class CDOSFloppyDiskTest {
         }
         extractDir.mkdirs();
 
-        FileSystem fs = FileSystems.getFloppyFileSystem(TEST_IMAGE, System.out);
+        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
         fs.extract(EXTRACT_PATH, System.out);
         System.out.println("done");
     }

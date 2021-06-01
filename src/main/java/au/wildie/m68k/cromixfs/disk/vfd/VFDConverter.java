@@ -1,10 +1,11 @@
-package au.wildie.m68k.cromixfs.disk.floppy.vfd;
+package au.wildie.m68k.cromixfs.disk.vfd;
 
 import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class VFDConverter {
     public static void imdToVfd(File imd, File vfd) throws IOException {
@@ -14,6 +15,12 @@ public class VFDConverter {
             vfd.delete();
         }
         FileUtils.writeByteArrayToFile(vfd, vfdImage.toBytes());
+    }
+
+    public static byte[] imdToVfd(InputStream imd) throws IOException {
+        IMDImage imdImage = IMDImage.fromStream(imd, System.out);
+        VFDImage vfdImage = VFDImage.from(imdImage);
+        return vfdImage.toBytes();
     }
 
     public static void vfdToImd(File vfd, File imd) {

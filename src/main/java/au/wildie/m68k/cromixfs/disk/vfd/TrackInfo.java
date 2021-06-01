@@ -1,4 +1,4 @@
-package au.wildie.m68k.cromixfs.disk.floppy.vfd;
+package au.wildie.m68k.cromixfs.disk.vfd;
 
 import au.wildie.m68k.cromixfs.utils.Int68000;
 import lombok.Getter;
@@ -23,6 +23,13 @@ public class TrackInfo {
 
     public int size() {
         return sectors * sectorBytes;
+    }
+
+    public static TrackInfo fromBytes(byte[] data, int index) {
+        int sectors = Int68000.from2Bytes(data, index);
+        int sectorBytes = Int68000.from2Bytes(data, index + 2);
+        int offset = Int68000.from2Bytes(data, index + 4);
+        return new TrackInfo(sectors, sectorBytes, offset);
     }
 
     public byte[] toBytes() throws IOException {

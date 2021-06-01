@@ -1,5 +1,6 @@
 package au.wildie.m68k.cromixfs.disk.floppy.cdos;
 
+import au.wildie.m68k.cromixfs.disk.floppy.IMDFloppyException;
 import au.wildie.m68k.cromixfs.disk.floppy.cromix.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
