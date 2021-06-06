@@ -46,7 +46,7 @@ public class CDOSFileSystem implements FileSystem {
     private final int directoryRecords;
     private final int[] clusterNumbers;
 
-    public CDOSFileSystem(DiskInterface disk) {
+    public CDOSFileSystem(DiskInterface disk) throws IOException {
         this.disk = disk;
 
         byte[] label = getDisk().getSuperBlock();

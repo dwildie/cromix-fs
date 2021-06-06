@@ -1,22 +1,23 @@
 package au.wildie.m68k.cromixfs.disk.floppy.cromix;
 
-import au.wildie.m68k.cromixfs.disk.floppy.IMDFloppyImage;
-import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
-import au.wildie.m68k.cromixfs.disk.imd.Sector;
-import au.wildie.m68k.cromixfs.disk.imd.Track;
-
-import java.io.*;
-
 import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskDensity.DOUBLE;
 import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskDensity.SINGLE;
 import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskSize.LARGE;
 import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskSize.SMALL;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import au.wildie.m68k.cromixfs.disk.floppy.IMDFloppyException;
+import au.wildie.m68k.cromixfs.disk.floppy.VFDFloppyImage;
+import au.wildie.m68k.cromixfs.disk.vfd.VFDImage;
+import org.apache.commons.io.FileUtils;
 
-public class CromixFloppyDisk extends IMDFloppyImage {
+
+public class CromixVFDFloppyDisk extends VFDFloppyImage {
 
     private final CromixFloppyInfo info;
 
-    public CromixFloppyDisk(IMDImage image, String formatLabel, PrintStream out) {
+    public CromixVFDFloppyDisk(VFDImage image, String formatLabel, PrintStream out) {
         super(image, formatLabel, out);
 
         if (formatLabel.charAt(0) != 'C') {
@@ -34,23 +35,7 @@ public class CromixFloppyDisk extends IMDFloppyImage {
         if (file.exists()) {
             file.delete();
         }
-
-        try (OutputStream out = new FileOutputStream(file)) {
-            for (Track track : image.getTracks()) {
-                if (track.getCylinder() == 0 && track.getHead() == 0) {
-                    // Write track 0
-                    for (int i = 0; i < track.getSectorCount(); i++) {
-                        out.write(track.getSector(i + 1).getData());
-                    }
-                } else {
-                    for (int i = 0; i < track.getSectorCount(); i++) {
-                        int sectorNumber = interleaved ? i + 1 : info.getInterleave()[i] + 1;
-                        out.write(track.getSector(sectorNumber).getData());
-                    }
-                }
-            }
-            out.flush();
-        }
+        FileUtils.writeByteArrayToFile(file, image.toBytes());
     }
 
     @Override
@@ -59,27 +44,26 @@ public class CromixFloppyDisk extends IMDFloppyImage {
     }
 
     @Override
-    public byte[] getSuperBlock() {
+    public byte[] getSuperBlock() throws IOException {
         // Will be in the first track, 128byte sectors
         byte[] block = new byte[512];
 
         for (int i = 0; i < 4; i++) {
-            System.arraycopy(image.getSector(0, 0, 5 + i).getData(), 0, block, 128 * i, 128);
+            System.arraycopy(image.read(0, 0, 5 + i), 0, block, 128 * i, 128);
         }
 
         return block;
     }
 
     @Override
-    public byte[] getBlock(int blockNumber) {
+    public byte[] getBlock(int blockNumber) throws IOException {
         int c = getCylinderForBlock(blockNumber);
         int h = getHeadForBlock(blockNumber);
         int s = getSectorForBlock(blockNumber);
 
         int is = info.getInterleave()[0xFF & s] + 1;
 
-        Sector sector = image.getSector(c,h,is);
-        return sector.getData();
+        return image.read(c, h, is);
     }
 
     private int getCylinderForBlock(int block) {

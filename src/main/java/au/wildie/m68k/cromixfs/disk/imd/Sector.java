@@ -9,6 +9,7 @@ public class Sector {
     private int number;
     private int encoding;
     private int offset;
+    private int srcOffset;
     private byte[] data;
 
     public Sector(int size) {
