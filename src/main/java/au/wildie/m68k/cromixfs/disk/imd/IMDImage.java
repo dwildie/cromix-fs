@@ -7,6 +7,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static java.lang.Integer.max;
 
@@ -129,6 +131,7 @@ public class IMDImage {
                     }
                 } else if (sector.getEncoding() == SECTOR_ENCODING_ERROR_COMPRESSED) {
                     // Compressed data with read errors
+                    out.printf("Sector errors: cylinder %d, head %d, sector %d\n", track.getCylinder(), track.getHead(), sector.getNumber());
                     byte value = raw[index++];
                     for (int j = 0; j < track.getSectorSize(); j++) {
                         sector.getData()[j] = value;
@@ -141,6 +144,7 @@ public class IMDImage {
                     }
                 } else if (sector.getEncoding() == SECTOR_ENCODING_DELETED_ERROR_COMPRESSED) {
                     // Compressed deleted data with read errors
+                    out.printf("Deleted sector errors: cylinder %d, head %d, sector %d\n", track.getCylinder(), track.getHead(), sector.getNumber());
                     byte value = raw[index++];
                     for (int j = 0; j < track.getSectorSize(); j++) {
                         sector.getData()[j] = value;
@@ -308,6 +312,28 @@ public class IMDImage {
                 .flatMap(track -> track.getSectors().stream())
                 .filter(sector -> !SECTOR_ENCODING_VALID.contains(sector.getEncoding()))
                 .count();
+    }
+
+    public void verify(PrintStream out) {
+
+        // Check for missing sectors
+        tracks.forEach(track -> {
+            if (track.getSectorCount() != 16) {
+                out.println("");
+            }
+            Set<Integer> expectedSectors = IntStream.rangeClosed(1, track.getSectorCount())
+                    .boxed().collect(Collectors.toSet());
+            expectedSectors.removeAll(track.getSectors().stream()
+                                        .map(Sector::getNumber)
+                                        .collect(Collectors.toSet()));
+            if (expectedSectors.size() > 0) {
+                out.printf("Cylinder %d, head %d, missing sectors %s", track.getCylinder(), track.getCylinder(),
+                   expectedSectors.stream()
+                           .sorted()
+                           .map(Object::toString)
+                           .collect(Collectors.joining(", ")));
+            }
+        });
     }
 
     private int decodeSectorSize(int value) {

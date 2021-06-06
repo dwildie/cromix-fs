@@ -64,7 +64,7 @@ public class VFDImage {
                 })
                 .forEach(track -> track.getSectors().stream()
                         .sorted(Comparator.comparing(Sector::getNumber))
-                        .forEach(sector -> {
+                         .forEach(sector -> {
                             try {
                                 data.write(sector.getData());
                             } catch (IOException e) {

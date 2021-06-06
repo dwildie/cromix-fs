@@ -41,7 +41,7 @@ public class VFDImageTest {
 
     @Test
     public void read() throws IOException {
-        InputStream imdFile = this.getClass().getClassLoader().getResourceAsStream("imd/848CR162.IMD");
+        InputStream imdFile = this.getClass().getClassLoader().getResourceAsStream("imd/458C3140.IMD");
         assertThat(imdFile, notNullValue());
 
         IMDImage imdImage = new IMDImage(IOUtils.toByteArray(imdFile), System.out);
@@ -63,6 +63,9 @@ public class VFDImageTest {
                     vfdData = vfdImage.read(track.getCylinder(), track.getHead(), sector.getNumber());
                 } catch (IOException e) {
                     assertThat(desc + e.getMessage(), vfdData, is(not(anything())));
+                }
+                if (track.getCylinder() == 0x37 && track.getHead() == 0x1 && sector.getNumber() == 0x6) {
+                    System.out.println("Stop");
                 }
                 assertThat(desc + "imdData should not be null", imdData, notNullValue());
                 assertThat(desc + "vfdData should not be null", vfdData, notNullValue());

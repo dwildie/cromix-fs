@@ -12,16 +12,20 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
 public class VFDConverterTest {
-    private static String TEST_IMD_FILE = "imd/848CR162.IMD";
+    private static String TEST_IMD_FILE = "imd/904C3140.IMD";
 
     @Test
     public void ImdToVfd() throws IOException {
         InputStream imdFile = this.getClass().getClassLoader().getResourceAsStream(TEST_IMD_FILE);
         assertThat(imdFile, notNullValue());
 
-        byte[] vfd = VFDConverter.imdToVfd(imdFile);
-        File vfdFile = Paths.get(System.getProperty("java.io.tmpdir"), getName(removeExtension(TEST_IMD_FILE) + ".vfd")).toFile();
-        FileUtils.writeByteArrayToFile(vfdFile, vfd);
-        System.out.printf("VFD File path: %s\n", vfdFile.getPath());
+        try {
+            byte[] vfd = VFDConverter.imdToVfd(imdFile, true);
+            File vfdFile = Paths.get(System.getProperty("java.io.tmpdir"), getName(removeExtension(TEST_IMD_FILE) + ".vfd")).toFile();
+            FileUtils.writeByteArrayToFile(vfdFile, vfd);
+            System.out.printf("VFD File path: %s\n", vfdFile.getPath());
+        } catch (VFDErrorsException e) {
+            System.out.println(e.getMessage());
+        }
     }
 }
