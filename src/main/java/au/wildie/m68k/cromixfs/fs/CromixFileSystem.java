@@ -11,11 +11,22 @@ import java.util.Date;
 
 import static au.wildie.m68k.cromixfs.fs.DumpMode.EXTRACT;
 import static au.wildie.m68k.cromixfs.fs.DumpMode.LIST;
+import static au.wildie.m68k.cromixfs.utils.BinUtils.readDWord;
+import static au.wildie.m68k.cromixfs.utils.BinUtils.readString;
+import static au.wildie.m68k.cromixfs.utils.BinUtils.readWord;
 
 public class CromixFileSystem implements FileSystem {
-    private static final int SUPER_INODE_FIRST_OFFSET = 0x08;
-    private static final int SUPER_INODE_COUNT_OFFSET = 0x0a;
-    private static final int SUPER_CROMIX_OFFSET = 0x02;
+    private static final int SUPER_VERSION_OFFSET           = 0x000;
+    private static final int SUPER_CROMIX_OFFSET            = 0x002;
+    private static final int SUPER_INODE_FIRST_OFFSET       = 0x008;
+    private static final int SUPER_INODE_COUNT_OFFSET       = 0x00a;
+    private static final int SUPER_BLOCK_COUNT_OFFSET       = 0x00c;
+    private static final int SUPER_LAST_MODIFIED_OFFSET     = 0x010;
+    private static final int SUPER_BLOCK_SIZE_OFFSET        = 0x016;
+    private static final int SUPER_FREE_INODES_OFFSET       = 0x01c;
+    private static final int SUPER_FREE_INODE_LIST_OFFSET   = 0x01e;
+    private static final int SUPER_FREE_BLOCKS_OFFSET       = 0x15e;
+    private static final int SUPER_FREE_BLOCK_LIST_OFFSET   = 0x160;
 
     private static final int INODE_LENGTH = 0x80;
 
@@ -60,6 +71,8 @@ public class CromixFileSystem implements FileSystem {
 
     private final int inodeFirst;
     private final int inodeCount;
+    private final int blockCount;
+    private final int blockSize;
 
     public CromixFileSystem(DiskInterface disk) throws IOException {
         disk.checkSupported();
@@ -75,6 +88,8 @@ public class CromixFileSystem implements FileSystem {
 
         inodeFirst = readWord(superBlock, SUPER_INODE_FIRST_OFFSET);
         inodeCount = readWord(superBlock, SUPER_INODE_COUNT_OFFSET);
+        blockCount = readDWord(superBlock, SUPER_BLOCK_COUNT_OFFSET);
+        blockSize = readDWord(superBlock, SUPER_BLOCK_SIZE_OFFSET);
     }
 
     @Override
@@ -270,24 +285,6 @@ public class CromixFileSystem implements FileSystem {
         byte[] block = disk.getBlock(blockNumber);
         int startInode = ((inodeNumber - 1) % 4) * INODE_LENGTH;
         return Arrays.copyOfRange(block, startInode, startInode + INODE_LENGTH);
-    }
-
-    private int readDWord(byte[] data, int offset) {
-        return (((((0xFF & data[offset]) << 8) + (0xFF & data[offset + 1]) << 8) + (0xFF & data[offset + 2])) << 8) + (0xFF & data[offset + 3]);
-    }
-
-    private int readWord(byte[] data, int offset) {
-        return ((0xFF & data[offset]) << 8) + (0xFF & data[offset + 1]);
-    }
-
-    private String readString(byte data[], int offset) {
-        String str = "";
-
-        for (int i = 0; data[offset + i] != 0; i++) {
-            str += (char)data[offset + i];
-        }
-
-        return str;
     }
 
     private String getType(int type) {
