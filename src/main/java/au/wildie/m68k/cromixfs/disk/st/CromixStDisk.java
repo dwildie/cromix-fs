@@ -1,7 +1,7 @@
 package au.wildie.m68k.cromixfs.disk.st;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
-import au.wildie.m68k.cromixfs.fs.FileSystem;
+import au.wildie.m68k.cromixfs.fs.CromixFileSystem;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -55,12 +55,12 @@ public class CromixStDisk implements DiskInterface {
 
 
     public void list(PrintStream out) throws IOException {
-        new FileSystem(this).list(out);
+        new CromixFileSystem(this).list(out);
     }
 
-    public void extract(String path) throws IOException {
+    public void extract(String path, PrintStream out) throws IOException {
         System.out.printf("Extracting to directory: %s\n", path);
-        new FileSystem(this).extract(path);
+        new CromixFileSystem(this).extract(path, out);
     }
 
     @Override
@@ -78,6 +78,31 @@ public class CromixStDisk implements DiskInterface {
 
     public void checkSupported() {
         // yes
+    }
+
+    @Override
+    public void writeImage(String fileName, boolean interleaved) throws IOException {
+        throw new IOException("Unimplemented operation");
+    }
+
+    @Override
+    public String getFormatLabel() {
+        return null;
+    }
+
+    @Override
+    public Integer getTrackCount() {
+        return null;
+    }
+
+    @Override
+    public Integer getTrackCount(int head) {
+        return null;
+    }
+
+    @Override
+    public Integer getSectorErrorCount() {
+        return null;
     }
 
     private int getCylinderForBlock(int unit, int block) {

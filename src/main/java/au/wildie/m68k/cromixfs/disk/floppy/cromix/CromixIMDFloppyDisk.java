@@ -1,68 +1,33 @@
-package au.wildie.m68k.cromixfs.disk.floppy;
+package au.wildie.m68k.cromixfs.disk.floppy.cromix;
 
-import au.wildie.m68k.cromixfs.disk.DiskInterface;
+import au.wildie.m68k.cromixfs.disk.floppy.IMDFloppyException;
+import au.wildie.m68k.cromixfs.disk.floppy.IMDFloppyImage;
 import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
 import au.wildie.m68k.cromixfs.disk.imd.Sector;
 import au.wildie.m68k.cromixfs.disk.imd.Track;
-import au.wildie.m68k.cromixfs.fs.FileSystem;
-import lombok.Getter;
 
 import java.io.*;
-import java.util.Arrays;
 
+import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskDensity.DOUBLE;
+import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskDensity.SINGLE;
+import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskSize.LARGE;
+import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskSize.SMALL;
 
-import static au.wildie.m68k.cromixfs.disk.floppy.DiskDensity.DOUBLE;
-import static au.wildie.m68k.cromixfs.disk.floppy.DiskDensity.SINGLE;
-import static au.wildie.m68k.cromixfs.disk.floppy.DiskSize.LARGE;
-import static au.wildie.m68k.cromixfs.disk.floppy.DiskSize.SMALL;
+public class CromixIMDFloppyDisk extends IMDFloppyImage {
 
-public class CromixFloppyDisk implements DiskInterface {
-
-    private final IMDImage image;
-    private final DiskSize diskSize;
-    private final DiskDensity diskDensity;
-    private final DiskSides diskSides;
     private final CromixFloppyInfo info;
-    @Getter
-    private byte[] formatLabel;
 
-    public CromixFloppyDisk(String fileName, PrintStream out) {
-        image = new IMDImage(0, fileName, out);
+    public CromixIMDFloppyDisk(IMDImage image, String formatLabel, PrintStream out) {
+        super(image, formatLabel, out);
 
-        Sector zero = image.getSector(0, 0, 1);
-        formatLabel = Arrays.copyOfRange(zero.getData(), 120, 127);
-
-        out.format("Disk format: %c%c%c%c%c%c\n\n", formatLabel[0], formatLabel[1], formatLabel[2], formatLabel[3], formatLabel[4], formatLabel[5]);
-
-        if (formatLabel[0] != 'C') {
-            throw new CromixFloppyException("Not a cromix disk");
+        if (formatLabel.charAt(0) != 'C') {
+            throw new IMDFloppyException("Not a cromix disk");
         }
 
-        diskSize = formatLabel[1] == 'L' ? LARGE : SMALL;
-        diskDensity = formatLabel[2] == 'D' ? DOUBLE : SINGLE;
-        diskSides = formatLabel[4] == 'D' ? DiskSides.DOUBLE : DiskSides.SINGLE;
-        info = CromixFloppyInfo.get(diskSize, diskDensity);
-    }
-
-    public Integer getTrackCount() {
-        return image.getTrackCount();
-    }
-
-    public Integer getTrackCount(int head) {
-        return image.getTrackCount(head);
-    }
-
-    public Integer getSectorErrorCount() {
-        return image.getSectorErrorCount();
-    }
-
-    public void list(PrintStream out) throws IOException {
-        new FileSystem(this).list(out);
-    }
-
-    public void extract(String path) throws IOException {
-        System.out.printf("Extracting to directory: %s\n", path);
-        new FileSystem(this).extract(path);
+        DiskSize diskSize = formatLabel.charAt(1) == 'L' ? LARGE : SMALL;
+        DiskSides diskSides = formatLabel.charAt(2) == 'D' ? DiskSides.DOUBLE : DiskSides.SINGLE;
+        DiskDensity diskDensity = formatLabel.charAt(4) == 'D' ? DOUBLE : SINGLE;
+        info = CromixFloppyInfo.get(diskSize, diskSides, diskDensity);
     }
 
     public void writeImage(String fileName, boolean interleaved) throws IOException {
@@ -87,6 +52,11 @@ public class CromixFloppyDisk implements DiskInterface {
             }
             out.flush();
         }
+    }
+
+    @Override
+    public byte[] getInterleave() {
+        return info.getInterleave();
     }
 
     @Override

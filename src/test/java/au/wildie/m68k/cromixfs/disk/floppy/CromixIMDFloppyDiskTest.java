@@ -1,5 +1,7 @@
 package au.wildie.m68k.cromixfs.disk.floppy;
 
+import au.wildie.m68k.cromixfs.fs.FileSystem;
+import au.wildie.m68k.cromixfs.fs.FileSystems;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;
@@ -7,16 +9,16 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
-public class CromixFloppyDiskTest {
+public class CromixIMDFloppyDiskTest {
     //private static final String SCRATCH_FILE = "/home/dwildie/cromemcos/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_KERMIT-S_Release_1_Serial_10204_Kermit_Communications_Software_MOUNT_FORMAT.imd";
 
     private static final String TEST_IMAGE =
-            "/home/dwildie/cromemcos/HowardHarte/cromemco_imd/FLASHRAM_and_SDI2_Software_Development_05-11-86_Most_Files_Lost_07-19-90.imd"
+//            "/home/dwildie/cromemcos/HowardHarte/cromemco_imd/FLASHRAM_and_SDI2_Software_Development_05-11-86_Most_Files_Lost_07-19-90.imd"
 //            "/home/dwildie/cromemcos/HowardHarte/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_KERMIT-S_Release_1_Serial_10204_Kermit_Communications_Software_MOUNT_FORMAT.imd"
             //"/home/dwildie/cromemcos/HowardHarte/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus/Cromemco_CRO-PLUS-CS_Release_5_Serial_10018_68020_Cromix-Plus_Disk_1_of_9_BOOTABLE.imd"
             //"/home/dwildie/cromemcos/HowardHarte/Cromemco_CS1-D5E/DBASE_FRIDAY.imd"
             //"/tmp/mb/848CR162.IMD"
-//            "/tmp/mb/061C3105.IMD"
+            "/tmp/mb/326FLASH.IMD"
             ;
     private static final String EXTRACT_PATH = "/tmp/extract";
 
@@ -37,8 +39,8 @@ public class CromixFloppyDiskTest {
         }
 
         String imageFileName = String.format("%s.%s", FilenameUtils.removeExtension(TEST_IMAGE), "img");
-        CromixFloppyDisk floppy = new CromixFloppyDisk(TEST_IMAGE, System.out);
-        floppy.writeImage(imageFileName, true);
+        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
+        fs.getDisk().writeImage(imageFileName, true);
         System.out.println("done");
     }
 
@@ -50,12 +52,12 @@ public class CromixFloppyDiskTest {
             throw new IllegalArgumentException(String.format("Image file %s does not exist", TEST_IMAGE));
         }
 
-        CromixFloppyDisk floppy = new CromixFloppyDisk(TEST_IMAGE, System.out);
-        floppy.list(System.out);
+        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
+        fs.list(System.out);
         System.out.println("done");
     }
 
-//    @Test
+    @Test
     public void extract() throws IOException {
 
         File imdFile = new File(TEST_IMAGE);
@@ -69,8 +71,8 @@ public class CromixFloppyDiskTest {
         }
         extractDir.mkdirs();
 
-        CromixFloppyDisk floppy = new CromixFloppyDisk(TEST_IMAGE, System.out);
-        floppy.extract(EXTRACT_PATH);
+        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
+        fs.extract(EXTRACT_PATH, System.out);
         System.out.println("done");
     }
 }
