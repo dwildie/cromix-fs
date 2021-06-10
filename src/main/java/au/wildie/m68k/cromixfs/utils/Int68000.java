@@ -14,6 +14,12 @@ public class Int68000 {
         return ByteBuffer.wrap(data).order(ByteOrder.BIG_ENDIAN).getShort();
     }
     public static int from2Bytes(byte[] data, int offset) {
-        return ByteBuffer.wrap(data).order(ByteOrder.BIG_ENDIAN).getShort(offset);
+        return from2Bytes(data, offset, ByteOrder.BIG_ENDIAN);
+    }
+    public static int from2Bytes(byte[] data, int offset, ByteOrder byteOrder) {
+        return ByteBuffer.wrap(data).order(byteOrder).getShort(offset);
+    }
+    public static int from2BytesUnsigned(byte[] data, int offset) {
+        return (((data[offset + 1] & 0xff) << 8) | (data[offset] & 0xff));
     }
 }

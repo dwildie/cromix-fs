@@ -2,6 +2,7 @@ package au.wildie.m68k.cromixfs.disk.floppy;
 
 import au.wildie.m68k.cromixfs.fs.CDOSFileSystem;
 import au.wildie.m68k.cromixfs.fs.FileSystem;
+import au.wildie.m68k.cromixfs.fs.FileSystemOps;
 import au.wildie.m68k.cromixfs.fs.FileSystems;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -37,7 +38,7 @@ public class CDOSFloppyDiskTest {
             throw new IllegalArgumentException(String.format("Image file %s does not exist", TEST_IMAGE));
         }
 
-        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
+        FileSystem fs = (FileSystem)FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
         assertThat(fs, instanceOf(CDOSFileSystem.class));
 
         String imageFileName = String.format("%s.%s", FilenameUtils.removeExtension(TEST_IMAGE), "img");
@@ -54,7 +55,7 @@ public class CDOSFloppyDiskTest {
             throw new IllegalArgumentException(String.format("Image file %s does not exist", TEST_IMAGE));
         }
 
-        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
+        FileSystemOps fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
         assertThat(fs, instanceOf(CDOSFileSystem.class));
 
         fs.list(System.out);
@@ -75,7 +76,7 @@ public class CDOSFloppyDiskTest {
         }
         extractDir.mkdirs();
 
-        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
+        FileSystemOps fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
         fs.extract(EXTRACT_PATH, System.out);
         System.out.println("done");
     }

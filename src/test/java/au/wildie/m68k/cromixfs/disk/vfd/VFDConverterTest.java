@@ -12,7 +12,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
 public class VFDConverterTest {
-    private static String TEST_IMD_FILE = "imd/904C3140.IMD";
+    private static String TEST_IMD_FILE = "imd/849CR162.IMD";
 
     @Test
     public void ImdToVfd() throws IOException {

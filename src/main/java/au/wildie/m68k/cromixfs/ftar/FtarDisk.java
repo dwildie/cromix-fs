@@ -2,20 +2,22 @@ package au.wildie.m68k.cromixfs.ftar;
 
 import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
 import au.wildie.m68k.cromixfs.disk.imd.Sector;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class FtarDisk {
     private final IMDImage image;
-    private int nextBlockNumber = 0;
+    @Getter
+    private int currentBlockNumber = -1;
 
     public byte[] getNextBlock() {
-        return getBlock(nextBlockNumber++);
+        return getBlock(++currentBlockNumber);
     }
 
     public int skipBlocks(int skip) {
-        nextBlockNumber += skip;
-        return nextBlockNumber;
+        currentBlockNumber += skip;
+        return currentBlockNumber;
     }
 
     protected byte[] getBlock(int blockNumber) {

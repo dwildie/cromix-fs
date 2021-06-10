@@ -2,6 +2,7 @@ package au.wildie.m68k.cromixfs.disk.floppy;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
 import au.wildie.m68k.cromixfs.fs.FileSystem;
+import au.wildie.m68k.cromixfs.fs.FileSystemOps;
 import au.wildie.m68k.cromixfs.fs.FileSystems;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -82,7 +83,7 @@ public class FileScan {
         Info info = new Info(getRelativePath(parent, file.getName()));
 
         try {
-            FileSystem fs = FileSystems.getIMDFloppyFileSystem(file.getAbsolutePath(), out);
+            FileSystem fs = (FileSystem)FileSystems.getIMDFloppyFileSystem(file.getAbsolutePath(), out);
             DiskInterface disk = fs.getDisk();
             info.setFormatLabel(disk.getFormatLabel());
             info.setTracks(disk.getTrackCount());

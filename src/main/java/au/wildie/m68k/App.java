@@ -5,6 +5,7 @@ import au.wildie.m68k.cromixfs.disk.vfd.InvalidVFDImageException;
 import au.wildie.m68k.cromixfs.disk.vfd.VFDConverter;
 import au.wildie.m68k.cromixfs.disk.st.STDiskException;
 import au.wildie.m68k.cromixfs.disk.vfd.VFDErrorsException;
+import au.wildie.m68k.cromixfs.fs.FileSystemOps;
 import au.wildie.m68k.cromixfs.fs.FileSystems;
 import au.wildie.m68k.cromixfs.fs.FileSystem;
 import org.apache.commons.io.FilenameUtils;
@@ -32,12 +33,10 @@ public class App
                 System.out.printf("Cannot open image file %s\n", args[1]);
                 return;
             }
-
             File target = new File(args[2]);
             if (!target.exists()) {
                 target.mkdirs();
             }
-
             get(args[1]).extract(args[2], System.out);
             return;
         } else if (args.length == 2 && args[0].equalsIgnoreCase("-s")) {
@@ -62,8 +61,8 @@ public class App
         showUsage();
     }
 
-    private static FileSystem get(String filename) throws IOException, InvalidVFDImageException, STDiskException {
-        FileSystem fs;
+    private static FileSystemOps get(String filename) throws IOException, InvalidVFDImageException, STDiskException {
+        FileSystemOps fs;
         if (filename.toLowerCase().trim().endsWith(".imd")) {
             fs = FileSystems.getIMDFloppyFileSystem(filename, System.out);
         } else if (filename.toLowerCase().trim().endsWith(".vfd")) {

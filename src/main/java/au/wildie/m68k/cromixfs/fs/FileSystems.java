@@ -12,6 +12,7 @@ import au.wildie.m68k.cromixfs.disk.st.CromixStDisk;
 import au.wildie.m68k.cromixfs.disk.st.STDiskException;
 import au.wildie.m68k.cromixfs.disk.vfd.InvalidVFDImageException;
 import au.wildie.m68k.cromixfs.disk.vfd.VFDImage;
+import au.wildie.m68k.cromixfs.ftar.CromixFtar;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,12 +20,15 @@ import java.io.PrintStream;
 import java.util.Arrays;
 
 public class FileSystems {
-    public static FileSystem getIMDFloppyFileSystem(String fileName, PrintStream out) throws IOException {
+    public static FileSystemOps getIMDFloppyFileSystem(String fileName, PrintStream out) throws IOException {
         IMDImage image = IMDImage.fromFile(0, fileName, out);
 
         Sector zero = image.getSector(0, 0, 1);
-        String formatLabel = new String(Arrays.copyOfRange(zero.getData(), 120, 127)).replaceAll("\\P{InBasic_Latin}", "");
+        if (zero.getData()[0] == '.') {
+            return new CromixFtar(image);
+        }
 
+        String formatLabel = new String(Arrays.copyOfRange(zero.getData(), 120, 127)).replaceAll("\\P{InBasic_Latin}", "");
         if (formatLabel.charAt(0) == 'L' && formatLabel.charAt(1) == 'G') {
             // Large (8") CDOS
             return new CDOSFileSystem(new CDOSFloppyDisk(image, formatLabel, out));

@@ -39,7 +39,7 @@ public class CromixIMDFloppyDiskTest {
         }
 
         String imageFileName = String.format("%s.%s", FilenameUtils.removeExtension(TEST_IMAGE), "img");
-        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
+        FileSystem fs = (FileSystem)FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
         fs.getDisk().writeImage(imageFileName, true);
         System.out.println("done");
     }
@@ -52,7 +52,7 @@ public class CromixIMDFloppyDiskTest {
             throw new IllegalArgumentException(String.format("Image file %s does not exist", TEST_IMAGE));
         }
 
-        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
+        FileSystem fs = (FileSystem)FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
         fs.list(System.out);
         System.out.println("done");
     }
@@ -71,7 +71,7 @@ public class CromixIMDFloppyDiskTest {
         }
         extractDir.mkdirs();
 
-        FileSystem fs = FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
+        FileSystem fs = (FileSystem)FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
         fs.extract(EXTRACT_PATH, System.out);
         System.out.println("done");
     }

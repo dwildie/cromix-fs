@@ -17,6 +17,11 @@ public class Tbuf {
     public static final int TBUF_FILE_TYPE_OFFSET     = 0x101;
     public static final int TBUF_DEVICE_NUMBER_OFFSET = 0x102;
 
+    public static final int TBUF_FILE_SIZE_SIZE = 12;
+    public static final int TBUF_CHECKSUM_SIZE = 8;
+
+    public static final int TBUF_SIZE = 0x10A;
+
     private char[] name = new char[NAMSIZ];   /*   0 0x000 Path name                            */
     private char[] mode = new char[8];        /* 100 0x064 Unix-like access                     */
     private  char[] uid = new char[8];        /* 108 0x06c User ID                              */
