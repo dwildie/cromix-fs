@@ -42,7 +42,7 @@ public class HFEImage {
             currentTrack = new HFETrack(cylinder, head, header.getTrackEncoding(cylinder, head), header.getBitRate(), trackList[cylinder], content);
             currentTrack.read();
         }
-        return currentTrack.getSectors().get(sector).getData();
+        return currentTrack.getSectors().get(sector - 1).getData();
     }
 
     public byte[] toBytes() {
