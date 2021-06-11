@@ -1,20 +1,23 @@
 package au.wildie.m68k.cromixfs.disk.hxc;
 
-import org.apache.commons.io.IOUtils;
-
+import static au.wildie.m68k.cromixfs.utils.Int68000.from2BytesUnsigned;
 import java.io.IOException;
 import java.io.InputStream;
+import lombok.Getter;
+import org.apache.commons.io.IOUtils;
 
-import static au.wildie.m68k.cromixfs.utils.Int68000.from2BytesUnsigned;
-
+@Getter
 public class HFEImage {
-    private final int SIZE_BLOCK = 0x200;
+    public static final int SIZE_BLOCK = 0x200;
 
-    private byte[] content;
-    private HFEHeader header;
-    private TrackEntry[] trackList;
+    private final byte[] content;
+    private final HFEHeader header;
+    private final TrackEntry[] trackList;
+    private HFETrack currentTrack;
 
-
+    public static HFEImage from(byte[] content) throws IOException {
+        return new HFEImage(content);
+    }
 
     public static HFEImage from(InputStream src) throws IOException {
         return new HFEImage(IOUtils.toByteArray(src));
@@ -23,24 +26,9 @@ public class HFEImage {
     public HFEImage(byte[] content) {
         this.content = content;
         this.header = HFEHeader.from(content);
-        this.trackList = new TrackEntry[header.getTrackCount()];;
+        this.trackList = new TrackEntry[header.getCylinders()];;
 
-        System.out.printf("Tracks:           %d\n", header.getTrackCount());
-        System.out.printf("Heads:            %d\n", header.getHeadCount());
-        System.out.printf("Track encoding:   %d - %s\n", header.getEncoding(), header.getEncodingName());
-        System.out.printf("Bit rate:         %d kbps\n", header.getBitRate());
-        System.out.printf("Floppy RPM:       %d\n", header.getFloppyRPM());
-        System.out.printf("Interface mode:   %d - %s\n", header.getMode(), header.getModeName());
-        System.out.printf("Writable:         %b\n", header.isWriteable());
-        System.out.printf("Single step:      %b\n", header.isSingleStep());
-        System.out.printf("Track 0 alt enc:  %b\n", header.isTrack0AltEncoded());
-        if (header.isTrack0AltEncoded()) {
-            System.out.printf("Track 0 encoding: %d - %s\n", header.getTrack0Encoding(), header.getTrack0EncodingName());
-        }
-        System.out.printf("Track 1 alt enc:  %b\n", header.isTrack1AltEncoded());
-        if (header.isTrack1AltEncoded()) {
-            System.out.printf("Track 1 encoding: %d - %s\n", header.getTrack1Encoding(), header.getTrack1EncodingName());
-        }
+        System.out.println(header);
 
         for (int i = 0; i < trackList.length; i++) {
             trackList[i] = new TrackEntry(
@@ -49,14 +37,15 @@ public class HFEImage {
         }
     }
 
-    public byte[] getTrack(int cylinder, int head) {
-        TrackEntry entry = trackList[cylinder];
+    public byte[] read(int cylinder, int head, int sector) {
+        if (currentTrack == null || currentTrack.getCylinder() != cylinder || currentTrack.getHead() != head) {
+            currentTrack = new HFETrack(cylinder, head, header.getTrackEncoding(cylinder, head), header.getBitRate(), trackList[cylinder], content);
+            currentTrack.read();
+        }
+        return currentTrack.getSectors().get(sector).getData();
+    }
 
-        int offset = entry.getOffset() * SIZE_BLOCK;
-
-        byte[][] data = new byte[2][entry.getOffset() / 2];
-
-
-        return data[head];
+    public byte[] toBytes() {
+        return content;
     }
 }

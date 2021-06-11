@@ -67,6 +67,8 @@ public class App
             fs = FileSystems.getIMDFloppyFileSystem(filename, System.out);
         } else if (filename.toLowerCase().trim().endsWith(".vfd")) {
             fs = FileSystems.getVFDFloppyFileSystem(filename, System.out);
+        } else if (filename.toLowerCase().trim().endsWith(".hfe")) {
+            fs = FileSystems.getHFEFloppyFileSystem(filename, System.out);
         } else {
             fs = FileSystems.getSTFileSystem(filename, System.out);
         }

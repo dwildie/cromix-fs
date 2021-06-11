@@ -1,11 +1,19 @@
 package au.wildie.m68k.cromixfs.fs;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.util.Arrays;
+import au.wildie.m68k.cromixfs.disk.floppy.IMDFloppyException;
 import au.wildie.m68k.cromixfs.disk.floppy.VFDFloppyException;
 import au.wildie.m68k.cromixfs.disk.floppy.cdos.CDOSFloppyDisk;
+import au.wildie.m68k.cromixfs.disk.floppy.cromix.CromixHFEFloppyDisk;
 import au.wildie.m68k.cromixfs.disk.floppy.cromix.CromixIMDFloppyDisk;
 import au.wildie.m68k.cromixfs.disk.floppy.cromix.CromixVFDFloppyDisk;
-import au.wildie.m68k.cromixfs.disk.floppy.IMDFloppyException;
+import au.wildie.m68k.cromixfs.disk.floppy.HFEFloppyException;
+import au.wildie.m68k.cromixfs.disk.hxc.HFEImage;
 import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
 import au.wildie.m68k.cromixfs.disk.imd.Sector;
 import au.wildie.m68k.cromixfs.disk.st.CromixStDisk;
@@ -13,11 +21,7 @@ import au.wildie.m68k.cromixfs.disk.st.STDiskException;
 import au.wildie.m68k.cromixfs.disk.vfd.InvalidVFDImageException;
 import au.wildie.m68k.cromixfs.disk.vfd.VFDImage;
 import au.wildie.m68k.cromixfs.ftar.CromixFtar;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.util.Arrays;
+import org.apache.commons.io.FileUtils;
 
 public class FileSystems {
     public static FileSystemOps getIMDFloppyFileSystem(String fileName, PrintStream out) throws IOException {
@@ -45,6 +49,24 @@ public class FileSystems {
         throw new IMDFloppyException(String.format("Unrecognised disk, format label: \"%s\"", formatLabel));
     }
 
+    public static FileSystem getHFEFloppyFileSystem(String fileName, PrintStream out) throws IOException {
+        return getHFEFloppyFileSystem(HFEImage.from(FileUtils.readFileToByteArray(new File(fileName))), out);
+    }
+
+    public static FileSystem getHFEFloppyFileSystem(InputStream file, PrintStream out) throws IOException {
+        return getHFEFloppyFileSystem(HFEImage.from(file), out);
+    }
+
+    public static FileSystem getHFEFloppyFileSystem(HFEImage image, PrintStream out) throws IOException {
+        byte[] zero = image.read(0, 0, 1);
+        String formatLabel = new String(Arrays.copyOfRange(zero, 120, 127)).replaceAll("\\P{InBasic_Latin}", "");
+        if (formatLabel.charAt(0) == 'C') {
+            // Large or small Cromix floppy
+            return new CromixFileSystem(new CromixHFEFloppyDisk(image, formatLabel, out));
+        }
+        throw new HFEFloppyException(String.format("Unrecognised disk, format label: \"%s\"", formatLabel));
+    }
+
     public static FileSystem getVFDFloppyFileSystem(String fileName, PrintStream out) throws IOException, InvalidVFDImageException {
         return getVFDFloppyFileSystem(VFDImage.fromFile(0, fileName, out), out);
     }
@@ -56,20 +78,10 @@ public class FileSystems {
     protected static FileSystem getVFDFloppyFileSystem(VFDImage image, PrintStream out) throws IOException {
         byte[] zero = image.read(0, 0, 1);
         String formatLabel = new String(Arrays.copyOfRange(zero, 120, 127)).replaceAll("\\P{InBasic_Latin}", "");
-
-//        if (formatLabel.charAt(0) == 'L' && formatLabel.charAt(1) == 'G') {
-//            // Large (8") CDOS
-//            return new CDOSFileSystem(new CDOSFloppyDisk(image, formatLabel, out));
-//        }
-//        if (formatLabel.charAt(0) == 'S' && formatLabel.charAt(1) == 'M') {
-//            // Small (5.25") CDOS
-//            return new CDOSFileSystem(new CDOSFloppyDisk(image, formatLabel, out));
-//        }
         if (formatLabel.charAt(0) == 'C') {
             // Large or small Cromix floppy
             return new CromixFileSystem(new CromixVFDFloppyDisk(image, formatLabel, out));
         }
-
         throw new VFDFloppyException(String.format("Unrecognised disk, format label: \"%s\"", formatLabel));
     }
 

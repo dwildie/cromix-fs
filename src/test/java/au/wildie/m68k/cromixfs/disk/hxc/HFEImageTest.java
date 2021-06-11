@@ -16,5 +16,8 @@ public class HFEImageTest {
         InputStream src = this.getClass().getClassLoader().getResourceAsStream("hfe/848CR162.hfe");
         HFEImage image = HFEImage.from(src);
         assertThat(image, notNullValue());
+
+        byte[] data = image.read(0, 0, 0);
+        data = image.read(0, 1, 1);
     }
 }
