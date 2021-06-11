@@ -17,7 +17,7 @@ public class HFEImageTest {
         HFEImage image = HFEImage.from(src);
         assertThat(image, notNullValue());
 
-        byte[] data = image.read(0, 0, 0);
+        byte[] data = image.read(0, 0, 1);
         data = image.read(0, 1, 1);
     }
 }

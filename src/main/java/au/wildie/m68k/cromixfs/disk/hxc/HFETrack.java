@@ -35,6 +35,7 @@ public class HFETrack {
     private int shiftRegister;
     private int readValue;
     private byte cellGroup;
+    private int lastDataBit;
     private boolean first = true;
 
     protected void read() {
@@ -42,16 +43,16 @@ public class HFETrack {
         cellCount = entry.getLength() * 4; // A cell is 2 bits
         cellIndex = 0;
 
-        int crc = 0;
+        int initialCRC;
         byte[] header = new byte[4];
 
         while (cellIndex < cellCount) {
             if (advanceToNextIDAccessMark()) {
                 if (isMFMEncoding()) {
-                    crc = 0xb230;
+                    initialCRC = 0xb230;
                     readByte();
                 } else {
-                    crc = 0xef21;
+                    initialCRC = 0xef21;
                 }
 
                 header[ADDRESS_CYLINDER] = readByte();  // Cylinder
@@ -59,29 +60,52 @@ public class HFETrack {
                 header[ADDRESS_SECTOR] = readByte();  // Sector
                 header[ADDRESS_SIZE] = readByte();  // Sector size, 0=128, 1=256, 2=512, 3=1024, etc.
 
-                int expectedCRC = readBits(16);
-                int calculatedCrc = calculateCRC(header, 0, header.length, crc);
+                int expectedCRC = readTwoBytes();
+                int calculatedCrc = CheckSum.calculateCRC(header, 0, header.length, initialCRC);
                 if (calculatedCrc != expectedCRC) {
-                    System.out.printf("Header CRC error, expected 0x%04x, calculated 0x%04x", expectedCRC, calculatedCrc);
+                    System.out.printf("Sector %d Header CRC error, expected 0x%04x, calculated 0x%04x\n", header[ADDRESS_SECTOR], expectedCRC, calculatedCrc);
                 }
 
                 if (advanceToNextDataAccessMark()) {
-                    int accessMark = readValue;
+                    int accessMark = readValue & 0xFF;
 
                     if (isMFMEncoding()) {
-                        crc = (accessMark == MARK_DELETED) ? 0xe295 : 0xd2f6;
+                        initialCRC = (accessMark == MARK_DELETED) ? 0xe295 : 0xd2f6;
                     } else {
-                        crc = (accessMark == MARK_DELETED) ? 0xbf84 : 0x8fe7;
+                        initialCRC = (accessMark == MARK_DELETED) ? 0xbf84 : 0x8fe7;
                     }
 
-                    byte[] sector = new byte[sectorSize(header[ADDRESS_SIZE])];
-                    for (int i = 0; i < sector.length; i++) {
-                        sector[i] = readByte();
+                    HFESector sector = new HFESector(header[ADDRESS_SECTOR], cellIndex, sectorSize(header[ADDRESS_SIZE]), initialCRC, accessMark);
+                    for (int i = 0; i < sector.getSize(); i++) {
+                        sector.getData()[i] = readByte();
                     }
-                    sectors.add(new HFESector(header[ADDRESS_SECTOR], sector));
+                    sectors.add(sector);
+
+                    expectedCRC = readTwoBytes();
+                    calculatedCrc = sector.calculateChecksum();
+                    if (calculatedCrc != expectedCRC) {
+                        System.out.printf("Sector %d Data CRC error, expected 0x%04x, calculated 0x%04x\n", header[ADDRESS_SECTOR], expectedCRC, calculatedCrc);
+                    }
                 }
             }
         }
+    }
+
+    protected boolean isModified() {
+        return getSectors().stream().anyMatch(HFESector::isModified);
+    }
+
+    protected void persist() {
+        getSectors().stream()
+                .filter(HFESector::isModified)
+                .forEach(hfeSector -> {
+                    lastDataBit = (hfeSector.getAccessMark()) & 1;
+                    setCellPosition(hfeSector.getCellIndex());
+                    for (int j = 0; j < hfeSector.getSize(); j++) {
+                        writeBits(hfeSector.getData()[j], 8);
+                    }
+                    writeBits(hfeSector.calculateChecksum(), 16);
+                });
     }
 
     protected static int sectorSize(byte val) {
@@ -135,6 +159,32 @@ public class HFETrack {
         return (count == 0);
     }
 
+    private void writeBits(int value, int number) {
+        int mask = 1 << (number - 1);
+        for (int i = 0; i < number; i++) {
+            writeNextBit((value & mask)!=0);
+            mask >>= 1;
+        }
+    }
+
+    private void writeNextBit(boolean bit) {
+        boolean clock = isFMEncoding() || (lastDataBit ==0 && !bit);
+
+        writeNextCell(clock);
+        if (codeRate == 4) {
+            writeNextCell(false);  // ignore the next cell
+        }
+        writeNextCell(bit);   // Data bit
+        lastDataBit = bit? 1 : 0;
+        if (codeRate == 4) {
+            writeNextCell(false);  // ignore the next cell
+        }
+    }
+
+     private int readTwoBytes() {
+        return readBits(16);
+    }
+
     private byte readByte() {
         return (byte)readBits(8);
     }
@@ -168,11 +218,8 @@ public class HFETrack {
     }
 
     private int readNextCell() {
-        if ((cellIndex % 8)==0) {
-            int position = cellIndex / 8;
-            int blockIndex = position / (SIZE_BLOCK / 2);
-            int blockOffset = position % (SIZE_BLOCK / 2);
-            int trackOffset = blockIndex * SIZE_BLOCK + head * (SIZE_BLOCK / 2) + blockOffset;
+        if ((cellIndex % 8) == 0) {
+            int trackOffset = getTrackOffset(cellIndex / 8);
             if (trackOffset >= entry.getLength()) {
                 cellIndex = cellCount;
                 cellGroup = 0;
@@ -188,22 +235,32 @@ public class HFETrack {
         return value;
     }
 
-    public static int calculateCRC(byte[] data, int offset, int length, int initialCRC) {
-        // Big-endian, x^16+x^12+x^5+1 = (1) 0001 0000 0010 0001 = 0x1021
-        int crc = initialCRC;
-
-       for (int i = 0; i < length; i++) {
-            crc = (crc ^ (data[i + offset] << 8));
-            for (int j = 0; j <= 7; j++)	{
-                if ((crc & 0x8000) == 0x8000) {
-                    crc = ((crc << 1) ^ 0x1021);
-                }
-                else {
-                    crc = (crc << 1);
-                }
-            }
+    private void writeNextCell(boolean set) {
+        int position = cellIndex / 8;
+        if (position >= entry.getLength()) {
+            position =  entry.getLength() - 1;
         }
+        int trackOffset = getTrackOffset(position);
 
-        return (crc & 0xffff);
+        int bit = 1 << (cellIndex % 8);
+
+        if (set) {
+            content[entry.getOffset() * SIZE_BLOCK + trackOffset] |= bit;
+        } else {
+            content[entry.getOffset() * SIZE_BLOCK + trackOffset] &= ~bit;
+        }
+        cellIndex++;
+    }
+
+    private int getTrackOffset(int position) {
+        int blockIndex = position / (SIZE_BLOCK / 2);
+        int blockOffset = position % (SIZE_BLOCK / 2);
+        return blockIndex * SIZE_BLOCK + head * (SIZE_BLOCK / 2) + blockOffset;
+    }
+
+    private void setCellPosition(int pos) {
+        int trackOffset = getTrackOffset(pos / 8);
+        cellGroup = (byte)((content[entry.getOffset() * SIZE_BLOCK + trackOffset] >> (cellIndex % 8)) & 0xff);
+        cellIndex = pos;
     }
 }

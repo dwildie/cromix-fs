@@ -38,11 +38,22 @@ public class HFEImage {
     }
 
     public byte[] read(int cylinder, int head, int sector) {
+        return getSector(cylinder, head, sector).getData();
+    }
+
+    public HFESector getSector(int cylinder, int head, int sector) {
         if (currentTrack == null || currentTrack.getCylinder() != cylinder || currentTrack.getHead() != head) {
+            if (currentTrack != null && currentTrack.isModified()) {
+                currentTrack.persist();
+            }
             currentTrack = new HFETrack(cylinder, head, header.getTrackEncoding(cylinder, head), header.getBitRate(), trackList[cylinder], content);
             currentTrack.read();
         }
-        return currentTrack.getSectors().get(sector - 1).getData();
+        return currentTrack.getSectors().get(sector - 1);
+    }
+
+    public void write(int cylinder, int head, int sector, byte[] data) {
+        getSector(cylinder, head, sector).write(data);
     }
 
     public byte[] toBytes() {
