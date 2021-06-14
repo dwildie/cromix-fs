@@ -76,9 +76,9 @@ public class App
     }
 
     private static void showUsage() {
-        System.out.println("java -jar archive.jar -l file.imd ");
-        System.out.println("java -jar archive.jar -x file.imd path");
-        System.out.println("java -jar archive.jar -v file.imd path");
+        System.out.println("java -jar archive.jar -l file.imd | file.hfe");
+        System.out.println("java -jar archive.jar -x file.imd | file.hfe path");
+//        System.out.println("java -jar archive.jar -v file.imd | file.hfe path");
         System.out.println("java -jar archive.jar -s path");
     }
 }
