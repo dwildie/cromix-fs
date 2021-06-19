@@ -5,7 +5,7 @@ import au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskDensity;
 import au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskSides;
 import au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskSize;
 import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
-import au.wildie.m68k.cromixfs.disk.imd.Sector;
+import au.wildie.m68k.cromixfs.disk.imd.IMDSector;
 
 import java.io.PrintStream;
 
@@ -17,13 +17,14 @@ import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskSize.SMALL;
 public class CDOSFloppyDisk extends IMDFloppyImage {
     private final CDOSFloppyInfo info;
 
-    public CDOSFloppyDisk(IMDImage image, String formatLabel, PrintStream out) {
-        super(image, formatLabel, out);
+    public CDOSFloppyDisk(IMDImage image, PrintStream out) {
+        super(image, out);
 
-        DiskSize diskSize = formatLabel.charAt(0) == 'L' ? LARGE : SMALL;
-        DiskSides diskSides = formatLabel.charAt(2) == 'D' ? DiskSides.DOUBLE : DiskSides.SINGLE;
-        DiskDensity diskDensity = formatLabel.charAt(4) == 'D' ? DOUBLE : SINGLE;
+        DiskSize diskSize = getFormatLabel().charAt(0) == 'L' ? LARGE : SMALL;
+        DiskSides diskSides = getFormatLabel().charAt(2) == 'D' ? DiskSides.DOUBLE : DiskSides.SINGLE;
+        DiskDensity diskDensity = getFormatLabel().charAt(4) == 'D' ? DOUBLE : SINGLE;
         info = CDOSFloppyInfo.get(diskSize, diskSides, diskDensity);
+        out.format("Disk format: %s\n\n", getFormatLabel());
     }
 
     @Override
@@ -43,7 +44,7 @@ public class CDOSFloppyDisk extends IMDFloppyImage {
 
         int is = info.getInterleave()[0xFF & s] + 1;
 
-        Sector sector = image.getSector(c,h,is);
+        IMDSector sector = image.getSector(c,h,is);
         return sector.getData();
     }
 
@@ -57,11 +58,6 @@ public class CDOSFloppyDisk extends IMDFloppyImage {
 
     private int getSectorSectorNumber(int sectorNumber) {
         return sectorNumber % info.getSectorsPerTrack();
-    }
-
-    @Override
-    public void checkSupported() {
-
     }
 
     @Override

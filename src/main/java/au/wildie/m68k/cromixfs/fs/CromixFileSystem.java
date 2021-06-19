@@ -11,9 +11,7 @@ import java.util.Date;
 
 import static au.wildie.m68k.cromixfs.fs.DumpMode.EXTRACT;
 import static au.wildie.m68k.cromixfs.fs.DumpMode.LIST;
-import static au.wildie.m68k.cromixfs.utils.BinUtils.readDWord;
-import static au.wildie.m68k.cromixfs.utils.BinUtils.readString;
-import static au.wildie.m68k.cromixfs.utils.BinUtils.readWord;
+import static au.wildie.m68k.cromixfs.utils.BinUtils.*;
 
 public class CromixFileSystem implements FileSystem {
     private static final int SUPER_VERSION_OFFSET           = 0x000;
@@ -74,8 +72,18 @@ public class CromixFileSystem implements FileSystem {
     private final int blockCount;
     private final int blockSize;
 
+    public static boolean isValid(DiskInterface disk) {
+        try {
+            byte[] superBlock = disk.getSuperBlock();
+            String cromix = readString(superBlock, SUPER_CROMIX_OFFSET);
+            return cromix.equals("cromix");
+        } catch (Exception ignored) {
+        }
+        return false;
+    }
+
     public CromixFileSystem(DiskInterface disk) throws IOException {
-        disk.checkSupported();
+//        disk.checkSupported();
 
         this.disk = disk;
 
@@ -89,7 +97,12 @@ public class CromixFileSystem implements FileSystem {
         inodeFirst = readWord(superBlock, SUPER_INODE_FIRST_OFFSET);
         inodeCount = readWord(superBlock, SUPER_INODE_COUNT_OFFSET);
         blockCount = readDWord(superBlock, SUPER_BLOCK_COUNT_OFFSET);
-        blockSize = readDWord(superBlock, SUPER_BLOCK_SIZE_OFFSET);
+        blockSize = readDWord(superBlock, SUPER_BLOCK_SIZE_OFFSET) == 0 ? superBlock.length : readDWord(superBlock, SUPER_BLOCK_SIZE_OFFSET);
+    }
+
+    @Override
+    public String getName() {
+        return "Cromix filesystem";
     }
 
     @Override

@@ -6,9 +6,11 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 
+import static au.wildie.m68k.cromixfs.disk.imd.ImageException.CODE_ERROR;
+
 @Getter
 @Setter
-public class Track {
+public class IMDTrack {
     private int mode;
     private int cylinder;
     private int head;
@@ -16,12 +18,12 @@ public class Track {
     private int sectorSize;
     private int[] sectorMap;
     private int offset;
-    private List<Sector> sectors =  new ArrayList<>();
+    private List<IMDSector> sectors =  new ArrayList<>();
 
-    public Sector getSector(int sectorNumber) {
+    public IMDSector getSector(int sectorNumber) {
         return sectors.stream()
                 .filter(sector -> sector.getNumber() == sectorNumber)
                 .findFirst()
-                .orElseThrow(() -> new ImageException(String.format("Track cylinder %d, head %d: can't find sector %d", cylinder, head, sectorNumber)));
+                .orElseThrow(() -> new ImageException(CODE_ERROR, String.format("Track cylinder %d, head %d: can't find sector %d", cylinder, head, sectorNumber)));
     }
 }

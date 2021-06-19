@@ -1,8 +1,9 @@
 package au.wildie.m68k.cromixfs.disk.floppy;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
+import au.wildie.m68k.cromixfs.disk.floppy.cromix.CromixFloppyInfo;
 import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
-import au.wildie.m68k.cromixfs.disk.imd.Track;
+import au.wildie.m68k.cromixfs.disk.imd.IMDTrack;
 import lombok.Getter;
 
 import java.io.*;
@@ -12,23 +13,21 @@ public abstract class IMDFloppyImage implements DiskInterface {
     @Getter private final String formatLabel;
     private final PrintStream out;
 
-    public IMDFloppyImage(IMDImage image, String formatLabel, PrintStream out) {
+    public IMDFloppyImage(IMDImage image, PrintStream out) {
         this.image = image;
-        this.formatLabel = formatLabel;
+        this.formatLabel = CromixFloppyInfo.getFormatLabel(image.getSector(0,0,1).getData());
         this.out = out;
-        out.format("Disk format: %s\n\n", formatLabel);
     }
-    @Override
-    public void writeImage(String fileName, boolean interleaved) throws IOException {
-        out.printf("Writing image to %s\n\n", fileName);
 
-        File file = new File(fileName);
+    @Override
+    public void writeImage(File file, boolean interleaved) throws IOException {
+        out.printf("Writing image to %s\n\n", file.getPath());
         if (file.exists()) {
             file.delete();
         }
 
         try (OutputStream out = new FileOutputStream(file)) {
-            for (Track track : image.getTracks()) {
+            for (IMDTrack track : image.getTracks()) {
                 if (track.getCylinder() == 0 && track.getHead() == 0) {
                     // Write track 0
                     for (int i = 0; i < track.getSectorCount(); i++) {

@@ -1,10 +1,12 @@
 package au.wildie.m68k.cromixfs.disk.hxc;
 
 import java.io.PrintStream;
+
+import au.wildie.m68k.cromixfs.disk.DiskSector;
 import lombok.Getter;
 
 @Getter
-public class HFESector {
+public class HFESector extends DiskSector {
     private final int number; // 1 based
     private final int cellIndex;
     private final int size;
@@ -12,6 +14,7 @@ public class HFESector {
     private final int accessMark;
     private final byte[] data;
     private boolean modified = false;
+    private final boolean valid = true;
 
     public HFESector(int number, int cellIndex, int size, int initialCRC, int accessMark) {
         this.number = number;

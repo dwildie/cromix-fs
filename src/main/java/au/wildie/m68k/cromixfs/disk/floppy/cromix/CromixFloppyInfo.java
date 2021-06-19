@@ -4,6 +4,8 @@ import au.wildie.m68k.cromixfs.disk.floppy.IMDFloppyException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+
 import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskDensity.DOUBLE;
 import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskDensity.SINGLE;
 import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskSize.LARGE;
@@ -12,6 +14,9 @@ import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskSize.SMALL;
 @Getter
 @AllArgsConstructor
 public class CromixFloppyInfo {
+
+    public static final int LABEL_START = 120;
+    public static final int LABEL_END = 127;
 
     private static final byte[] x8d = {0,6,12,2,8,14,4,10,1,7,13,3,9,15,5,11}; /* Cromix 8" DD */
     private static final byte[] x8s = {0,3,6,1,4,7,2,5};                       /* Cromix 8" SD */
@@ -25,6 +30,21 @@ public class CromixFloppyInfo {
     private final int bytesPerSector;
     private final int blockOffset;
     private final byte[] interleave;
+
+    public static String getFormatLabel(byte[] sector) {
+        return new String(Arrays.copyOfRange(sector, LABEL_START, LABEL_END)).replaceAll("\\P{InBasic_Latin}", "").trim();
+    }
+
+    public static CromixFloppyInfo get(String label) {
+        DiskSize diskSize = label.charAt(1) == 'L' ? LARGE : SMALL;
+        DiskSides diskSides = label.charAt(2) == 'D' ? DiskSides.DOUBLE : DiskSides.SINGLE;
+        DiskDensity diskDensity = label.charAt(4) == 'D' ? DOUBLE : SINGLE;
+        return get(diskSize, diskSides, diskDensity);
+    }
+
+    public static CromixFloppyInfo getUniform(int cylinders, int heads, int sectors, int sectorSize) {
+        return new CromixFloppyInfo(cylinders, heads, sectors, sectors, sectorSize, 0,null);
+    }
 
     public static CromixFloppyInfo get(DiskSize diskSize, DiskSides diskSides, DiskDensity  diskDensity) {
         if (diskSize == LARGE) {

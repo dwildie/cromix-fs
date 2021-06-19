@@ -20,10 +20,8 @@ public abstract class VFDFloppyImage implements DiskInterface {
         out.format("Disk format: %s\n\n", formatLabel);
     }
     @Override
-    public void writeImage(String fileName, boolean interleaved) throws IOException {
-        out.printf("Writing image to %s\n\n", fileName);
-
-        File file = new File(fileName);
+    public void writeImage(File file, boolean interleaved) throws IOException {
+        out.printf("Writing image to %s\n\n", file.getPath());
         if (file.exists()) {
             file.delete();
         }

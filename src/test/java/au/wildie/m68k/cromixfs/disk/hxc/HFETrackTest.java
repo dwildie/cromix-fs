@@ -1,8 +1,9 @@
 package au.wildie.m68k.cromixfs.disk.hxc;
 
+import org.junit.Test;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import org.junit.Test;
 
 public class HFETrackTest {
 

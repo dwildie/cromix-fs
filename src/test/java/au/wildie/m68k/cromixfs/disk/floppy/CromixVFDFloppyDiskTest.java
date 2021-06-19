@@ -1,15 +1,17 @@
 package au.wildie.m68k.cromixfs.disk.floppy;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import au.wildie.m68k.cromixfs.disk.vfd.InvalidVFDImageException;
 import au.wildie.m68k.cromixfs.fs.FileSystem;
 import au.wildie.m68k.cromixfs.fs.FileSystems;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class CromixVFDFloppyDiskTest {
     private static final String VFD_TEST_FILE = "vfd/848CR162.vfd";

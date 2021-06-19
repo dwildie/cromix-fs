@@ -1,14 +1,16 @@
 package au.wildie.m68k.cromixfs.disk.floppy;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import au.wildie.m68k.cromixfs.fs.FileSystem;
+import au.wildie.m68k.cromixfs.fs.FileSystemOps;
 import au.wildie.m68k.cromixfs.fs.FileSystems;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class CromixHFEFloppyDiskTest {
     private static final String HFE_TEST_FILE = "hfe/848CR162.hfe";
@@ -19,7 +21,7 @@ public class CromixHFEFloppyDiskTest {
         InputStream hfeFile = this.getClass().getClassLoader().getResourceAsStream(HFE_TEST_FILE);
         assertThat(hfeFile, notNullValue());
 
-        FileSystem fs = FileSystems.getHFEFloppyFileSystem(hfeFile, System.out);
+        FileSystemOps fs = FileSystems.getHFEFloppyFileSystem(hfeFile, System.out);
         fs.list(System.out);
         System.out.println("done");
     }
@@ -35,7 +37,7 @@ public class CromixHFEFloppyDiskTest {
         }
         extractDir.mkdirs();
 
-        FileSystem fs = FileSystems.getHFEFloppyFileSystem(hfeFile, System.out);
+        FileSystemOps fs = FileSystems.getHFEFloppyFileSystem(hfeFile, System.out);
         fs.extract(EXTRACT_PATH, System.out);
         System.out.println("done");
     }

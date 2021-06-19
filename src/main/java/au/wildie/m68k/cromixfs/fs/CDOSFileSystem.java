@@ -51,7 +51,7 @@ public class CDOSFileSystem implements FileSystem {
 
         byte[] label = getDisk().getSuperBlock();
         if ((label[LABEL_ENTRY_OFFSET_FLAG] & 0xFF) != FLAG_LABEL) {
-            throw new CDOSFileSystemException(String.format("Unexpected first byte in disk label: %02x", label[0]));
+            throw new CDOSFileSystemException(String.format("Unexpected first byte in disk label: 0x%02x", label[0]));
         }
         labelName = new String(Arrays.copyOfRange(label, LABEL_ENTRY_OFFSET_NAME, LABEL_ENTRY_OFFSET_NAME + LABEL_ENTRY_LENGTH_NAME));
         created = String.format("%d-%d-%d", (1900 + label[LABEL_ENTRY_OFFSET_YEAR]), label[LABEL_ENTRY_OFFSET_MONTH], label[LABEL_ENTRY_OFFSET_DAY]);
@@ -72,6 +72,11 @@ public class CDOSFileSystem implements FileSystem {
                 clusterNumbers[i] = label[LABEL_ENTRY_OFFSET_CLUSTER_0 + i];
             }
         }
+    }
+
+    @Override
+    public String getName() {
+        return "CDOS filesystem";
     }
 
     @Override

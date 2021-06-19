@@ -3,10 +3,7 @@ package au.wildie.m68k.cromixfs.disk.st;
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
 import au.wildie.m68k.cromixfs.fs.CromixFileSystem;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.*;
 
 public class CromixStDisk implements DiskInterface {
     private static final int SECTOR_SIZE = 512; // Disks are always 512 byte sectors
@@ -81,7 +78,7 @@ public class CromixStDisk implements DiskInterface {
     }
 
     @Override
-    public void writeImage(String fileName, boolean interleaved) throws IOException {
+    public void writeImage(File file, boolean interleaved) throws IOException {
         throw new IOException("Unimplemented operation");
     }
 

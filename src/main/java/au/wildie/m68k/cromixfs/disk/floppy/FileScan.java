@@ -1,7 +1,6 @@
 package au.wildie.m68k.cromixfs.disk.floppy;
 
-import au.wildie.m68k.cromixfs.disk.DiskInterface;
-import au.wildie.m68k.cromixfs.fs.FileSystem;
+import au.wildie.m68k.cromixfs.disk.DiskInfo;
 import au.wildie.m68k.cromixfs.fs.FileSystemOps;
 import au.wildie.m68k.cromixfs.fs.FileSystems;
 import lombok.Getter;
@@ -43,16 +42,18 @@ public class FileScan {
                 .sorted(Comparator.comparing(Info::getRelativePath))
                 .forEach(entry -> System.out.printf("\"%s\" %s\n", entry.getError(), entry.getRelativePath()));
 
-        System.out.print("         total  tracks sector  image\n");
-        System.out.print("label   tracks  / side errors  file\n");
+        System.out.print("\n\n");
+        System.out.print("         total  tracks  sector\n");
+        System.out.print("label   tracks  / side  errors  usage              image file\n");
         info.stream()
                 .filter(entry -> entry.getError() == null)
                 .sorted(Comparator.comparing(Info::getRelativePath))
-                .forEach(entry -> System.out.printf("%-7s    %3d  %-7s %5d  %s\n",
-                        entry.getFormatLabel().replaceAll("\\P{InBasic_Latin}", ""),
+                .forEach(entry -> System.out.printf("%-7s    %3d  %-7s  %5d  %-17s  %s\n",
+                        Optional.ofNullable(entry.getFormatLabel()).map(label -> label.replaceAll("\\P{InBasic_Latin}", " ").trim()).orElse(""),
                         entry.getTracks(),
                         headTracks(entry),
                         entry.getSectorErrors(),
+                        entry.getFileSystem(),
                         entry.getRelativePath()));
     }
 
@@ -80,16 +81,18 @@ public class FileScan {
     }
 
     protected Info getInfo(String parent, File file, PrintStream out) {
+//        System.out.printf("Scanning %s\n", file.getPath());
         Info info = new Info(getRelativePath(parent, file.getName()));
 
         try {
-            FileSystem fs = (FileSystem)FileSystems.getIMDFloppyFileSystem(file.getAbsolutePath(), out);
-            DiskInterface disk = fs.getDisk();
+            FileSystemOps fs = FileSystems.getIMDFloppyFileSystem(file.getAbsolutePath(), out);
+            DiskInfo disk = fs.getDisk();
             info.setFormatLabel(disk.getFormatLabel());
             info.setTracks(disk.getTrackCount());
             info.setHead0Tracks(disk.getTrackCount(0));
             info.setHead1Tracks(disk.getTrackCount(1));
             info.setSectorErrors(disk.getSectorErrorCount());
+            info.setFileSystem(fs.getName());
         } catch (Exception e) {
             info.setError(e.getMessage());
         }
@@ -107,5 +110,6 @@ public class FileScan {
         private Integer head1Tracks;
         private Integer sectorErrors;
         private String error;
+        private String fileSystem;
     }
 }

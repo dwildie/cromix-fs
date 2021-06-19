@@ -77,14 +77,4 @@ public class CromixVFDFloppyDisk extends VFDFloppyImage {
     private int getSectorForBlock(int block) {
         return (block + info.getBlockOffset()) % info.getSectorsPerTrack();
     }
-
-    @Override
-    public void checkSupported() {
-//        if (diskDensity != DOUBLE) {
-//            throw new RuntimeException(String.format("%s density disks are not supported", diskDensity));
-//        }
-//        if (diskSides != DiskSides.DOUBLE) {
-//            throw new RuntimeException(String.format("%s sided disks are not supported", diskSides));
-//        }
-    }
 }

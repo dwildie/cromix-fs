@@ -1,15 +1,17 @@
 package au.wildie.m68k.cromixfs.disk.vfd;
 
-import static org.apache.commons.io.FilenameUtils.getName;
-import static org.apache.commons.io.FilenameUtils.removeExtension;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
+import org.apache.commons.io.FileUtils;
+import org.junit.Test;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import org.apache.commons.io.FileUtils;
-import org.junit.Test;
+
+import static org.apache.commons.io.FilenameUtils.getName;
+import static org.apache.commons.io.FilenameUtils.removeExtension;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class VFDConverterTest {
     private static String TEST_IMD_FILE = "imd/849CR162.IMD";

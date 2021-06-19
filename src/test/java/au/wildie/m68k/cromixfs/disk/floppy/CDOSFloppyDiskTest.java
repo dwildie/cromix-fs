@@ -1,5 +1,6 @@
 package au.wildie.m68k.cromixfs.disk.floppy;
 
+import au.wildie.m68k.cromixfs.disk.DiskInterface;
 import au.wildie.m68k.cromixfs.fs.CDOSFileSystem;
 import au.wildie.m68k.cromixfs.fs.FileSystem;
 import au.wildie.m68k.cromixfs.fs.FileSystemOps;
@@ -10,6 +11,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -41,8 +43,8 @@ public class CDOSFloppyDiskTest {
         FileSystem fs = (FileSystem)FileSystems.getIMDFloppyFileSystem(TEST_IMAGE, System.out);
         assertThat(fs, instanceOf(CDOSFileSystem.class));
 
-        String imageFileName = String.format("%s.%s", FilenameUtils.removeExtension(TEST_IMAGE), "img");
-        fs.getDisk().writeImage(imageFileName, true);
+        File out = Paths.get(System.getProperty("java.io.tmpdir"), String.format("%s.%s", FilenameUtils.removeExtension(TEST_IMAGE), "img")).toFile();
+        ((DiskInterface)fs.getDisk()).writeImage(out, true);
 
         System.out.println("done");
     }

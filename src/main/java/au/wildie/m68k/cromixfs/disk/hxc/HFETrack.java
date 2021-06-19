@@ -5,6 +5,8 @@ import static au.wildie.m68k.cromixfs.disk.hxc.HFEHeader.ISOIBM_MFM_ENCODING;
 import static au.wildie.m68k.cromixfs.disk.hxc.HFEImage.SIZE_BLOCK;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -89,6 +91,14 @@ public class HFETrack {
                 }
             }
         }
+    }
+
+    public int getSectorCount() {
+        return Optional.ofNullable(sectors).map(List::size).orElse(0);
+    }
+
+    public int getSectorSize() {
+        return Optional.ofNullable(sectors).map(list -> list.get(0)).map(HFESector::getSize).orElse(0);
     }
 
     protected boolean isModified() {

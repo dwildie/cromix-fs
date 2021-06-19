@@ -1,13 +1,17 @@
 package au.wildie.m68k.cromixfs.disk.hxc;
 
+import static au.wildie.m68k.cromixfs.disk.imd.ImageException.CODE_END_OF_DISK;
 import static au.wildie.m68k.cromixfs.utils.Int68000.from2BytesUnsigned;
 import java.io.IOException;
 import java.io.InputStream;
+
+import au.wildie.m68k.cromixfs.disk.DiskImage;
+import au.wildie.m68k.cromixfs.disk.imd.ImageException;
 import lombok.Getter;
 import org.apache.commons.io.IOUtils;
 
 @Getter
-public class HFEImage {
+public class HFEImage extends DiskImage  {
     public static final int SIZE_BLOCK = 0x200;
 
     private final byte[] content;
@@ -41,7 +45,24 @@ public class HFEImage {
         return getSector(cylinder, head, sector).getData();
     }
 
-    public HFESector getSector(int cylinder, int head, int sector) {
+    @Override
+    public int getCylinders() {
+        return trackList.length;
+    }
+
+    @Override
+    public int getHeads() {
+        return 2;
+    }
+
+    public HFESector getSector(int cylinder, int head, int sectorNumber) {
+        if (cylinder >= trackList.length) {
+            throw new ImageException(CODE_END_OF_DISK, String.format("Cylinder %d does not exist", cylinder));
+        }
+        return getTrack(cylinder, head).getSectors().get(sectorNumber - 1);
+    }
+
+    public HFETrack getTrack(int cylinder, int head) {
         if (currentTrack == null || currentTrack.getCylinder() != cylinder || currentTrack.getHead() != head) {
             if (currentTrack != null && currentTrack.isModified()) {
                 currentTrack.persist();
@@ -49,7 +70,7 @@ public class HFEImage {
             currentTrack = new HFETrack(cylinder, head, header.getTrackEncoding(cylinder, head), header.getBitRate(), trackList[cylinder], content);
             currentTrack.read();
         }
-        return currentTrack.getSectors().get(sector - 1);
+        return currentTrack;
     }
 
     public void write(int cylinder, int head, int sector, byte[] data) {

@@ -9,13 +9,15 @@ import java.io.PrintStream;
 import java.util.Comparator;
 import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
 import au.wildie.m68k.cromixfs.disk.imd.ImageException;
-import au.wildie.m68k.cromixfs.disk.imd.Sector;
-import au.wildie.m68k.cromixfs.disk.imd.Track;
+import au.wildie.m68k.cromixfs.disk.imd.IMDSector;
+import au.wildie.m68k.cromixfs.disk.imd.IMDTrack;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+
+import static au.wildie.m68k.cromixfs.disk.imd.ImageException.CODE_ERROR;
 
 @Getter
 @RequiredArgsConstructor
@@ -32,7 +34,7 @@ public class VFDImage {
 
         if (!imdFile.exists()) {
             out.printf("Drive %d: VFD file %s does not exist%n", driveId, imdFile.getPath());
-            throw new ImageException(String.format("Drive %d: IMD file %s does not exist%n", driveId, imdFile.getPath()));
+            throw new ImageException(CODE_ERROR, String.format("Drive %d: IMD file %s does not exist%n", driveId, imdFile.getPath()));
         }
 
         try (InputStream src = new FileInputStream(imdFile)) {
@@ -54,7 +56,7 @@ public class VFDImage {
         ByteArrayOutputStream data = new ByteArrayOutputStream();
 
         imd.getTracks().stream()
-                .sorted(Comparator.comparing(Track::getCylinder).thenComparing(Track::getHead))
+                .sorted(Comparator.comparing(IMDTrack::getCylinder).thenComparing(IMDTrack::getHead))
                 .peek(track -> {
                     if (track.getCylinder() == 0 && track.getHead() == 0) {
                         info.setFirst(new TrackInfo(track.getSectorCount(), track.getSectorSize(), ImageInfo.SIZE));
@@ -63,7 +65,7 @@ public class VFDImage {
                     }
                 })
                 .forEach(track -> track.getSectors().stream()
-                        .sorted(Comparator.comparing(Sector::getNumber))
+                        .sorted(Comparator.comparing(IMDSector::getNumber))
                          .forEach(sector -> {
                             try {
                                 data.write(sector.getData());
