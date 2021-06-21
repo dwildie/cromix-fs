@@ -4,8 +4,8 @@ import lombok.Getter;
 
 @Getter
 public class HeaderChecksumException extends Exception {
-    private final Thead thead;
-    HeaderChecksumException(String msg, Thead thead) {
+    private final FTarHeader thead;
+    HeaderChecksumException(String msg, FTarHeader thead) {
         super(msg);
         this.thead = thead;
     }

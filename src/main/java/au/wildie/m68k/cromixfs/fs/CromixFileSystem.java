@@ -140,7 +140,7 @@ public class CromixFileSystem implements FileSystem {
                         int othP = 0xFF & entryINode[INODE_P_OTH_OFFSET];
                         int lnks = 0xFF & entryINode[INODE_LINKS_OFFSET];
 
-                        CromixTime modified = new CromixTime(Arrays.copyOfRange(entryINode, INODE_MODIFIED_OFFSET, INODE_MODIFIED_OFFSET + TIME_SIZE));
+                        CromixTimeUtils modified = new CromixTimeUtils(Arrays.copyOfRange(entryINode, INODE_MODIFIED_OFFSET, INODE_MODIFIED_OFFSET + TIME_SIZE));
 
                         if (type == INODE_TYPE_CHAR || type == INODE_TYPE_BLOCK) {
                             int major = 0xFF & entryINode[INODE_MAJOR_OFFSET];
@@ -188,7 +188,7 @@ public class CromixFileSystem implements FileSystem {
         out.print("");
     }
 
-    private void extractFile(byte[] inode, int size, CromixTime modified, String path) throws IOException {
+    private void extractFile(byte[] inode, int size, CromixTimeUtils modified, String path) throws IOException {
         int remainingBytes = size;
         File file = new File(path);
 

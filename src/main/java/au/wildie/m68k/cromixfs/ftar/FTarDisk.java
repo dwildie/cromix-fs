@@ -5,6 +5,7 @@ import au.wildie.m68k.cromixfs.disk.floppy.cromix.CromixFloppyInfo;
 import au.wildie.m68k.cromixfs.disk.imd.ImageException;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.OutputStream;
 import java.io.PrintStream;
 
 import static au.wildie.m68k.cromixfs.disk.imd.ImageException.CODE_END_OF_DISK;
@@ -17,7 +18,7 @@ public abstract class FTarDisk implements DiskInfo {
     protected CromixFloppyInfo info = null;
     protected final Boolean uniform;
     protected int initialBlockNumber = 0;
-    protected int currentBlockNumber = -1;
+    protected int currentBlockNumber;
     protected String formatLabel = null;
 
     public FTarDisk(DiskImage image, FTarTrackInfo track0, FTarTrackInfo track1, PrintStream out) {
@@ -81,14 +82,6 @@ public abstract class FTarDisk implements DiskInfo {
         return count;
     }
 
-    public byte[] getNextBlock() throws SectorInvalidException {
-        if (currentBlockNumber + 1 >= getBlockCount()) {
-            throw new ImageException(CODE_END_OF_DISK, String.format("Block %d does not exist", currentBlockNumber + 1));
-        }
-
-        return getBlock(++currentBlockNumber);
-    }
-
     public void skipBlocks(int skip) {
         currentBlockNumber += skip;
     }
@@ -101,6 +94,13 @@ public abstract class FTarDisk implements DiskInfo {
         return FTAR_BLOCK_SIZE;
     }
 
+    public byte[] getNextBlock() throws SectorInvalidException {
+        if (currentBlockNumber + 1 >= getBlockCount()) {
+            throw new ImageException(CODE_END_OF_DISK, String.format("Block %d does not exist", currentBlockNumber + 1));
+        }
+
+        return getBlock(++currentBlockNumber);
+    }
 
     protected byte[] getBlock(int block) throws SectorInvalidException {
         int c = getCylinderForBlock(block);
@@ -119,6 +119,31 @@ public abstract class FTarDisk implements DiskInfo {
         }
         return data;
     }
+
+    public void setNextBlock(byte[] data) throws SectorInvalidException {
+        if (currentBlockNumber + 1 >= getBlockCount()) {
+            throw new ImageException(CODE_END_OF_DISK, String.format("Block %d does not exist", currentBlockNumber + 1));
+        }
+
+        setBlock(++currentBlockNumber, data);
+    }
+
+    protected void setBlock(int block, byte[] data) throws SectorInvalidException {
+        int c = getCylinderForBlock(block);
+        int h = getHeadForBlock(block);
+        int s = getSectorForBlock(block);
+
+        FTarTrackInfo tInfo = block < trackInfo[0].getBlockCount() ? trackInfo[0] : trackInfo[1];
+        for (int i = 0; i < (FTAR_BLOCK_SIZE / tInfo.getSectorSize()); i++) {
+            int sectorNumber = (info != null && block >= trackInfo[0].getBlockCount()) ? (info.getInterleave()[0xFF & (s + i)] + 1) : (s + i + 1);
+            DiskSector sector = image.getSector(c, h, sectorNumber);
+            if (!sector.isValid()) {
+                throw new SectorInvalidException(c, h, sectorNumber);
+            }
+            System.arraycopy(data, tInfo.getSectorSize() * i, sector.getData(), 0, tInfo.getSectorSize());
+        }
+    }
+
 
     protected int getCylinderForBlock(int block) {
         if (block < getCylinderBlockCount(0)) {
@@ -152,4 +177,7 @@ public abstract class FTarDisk implements DiskInfo {
         return cyl == 0 ? trackInfo[0].getBlockCount() + trackInfo[1].getBlockCount() : 2 * trackInfo[1].getBlockCount();
     }
 
+    public void persist(OutputStream archive) {
+        image.persist(archive);
+    }
 }

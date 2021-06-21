@@ -1,6 +1,7 @@
 package au.wildie.m68k.cromixfs.disk.imd;
 
 import au.wildie.m68k.cromixfs.disk.DiskImage;
+import au.wildie.m68k.cromixfs.disk.floppy.cromix.CromixFloppyInfo;
 import lombok.Getter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -22,15 +23,15 @@ public class IMDImage extends DiskImage {
     private int cylinders= -1;
     private final List<IMDTrack> tracks = new ArrayList<>();
 
-    private static final int SECTOR_ENCODING_UNAVAILABLE = 0;
-    private static final int SECTOR_ENCODING_NORMAL = 1;
-    private static final int SECTOR_ENCODING_COMPRESSED = 2;
-    private static final int SECTOR_ENCODING_DELETED = 3;
-    private static final int SECTOR_ENCODING_DELETED_COMPRESSED = 4;
-    private static final int SECTOR_ENCODING_ERROR = 5;
-    private static final int SECTOR_ENCODING_ERROR_COMPRESSED = 6;
-    private static final int SECTOR_ENCODING_DELETED_ERROR = 7;
-    private static final int SECTOR_ENCODING_DELETED_ERROR_COMPRESSED = 8;
+    public static final int SECTOR_ENCODING_UNAVAILABLE = 0;
+    public static final int SECTOR_ENCODING_NORMAL = 1;
+    public static final int SECTOR_ENCODING_COMPRESSED = 2;
+    public static final int SECTOR_ENCODING_DELETED = 3;
+    public static final int SECTOR_ENCODING_DELETED_COMPRESSED = 4;
+    public static final int SECTOR_ENCODING_ERROR = 5;
+    public static final int SECTOR_ENCODING_ERROR_COMPRESSED = 6;
+    public static final int SECTOR_ENCODING_DELETED_ERROR = 7;
+    public static final int SECTOR_ENCODING_DELETED_ERROR_COMPRESSED = 8;
 
     private static final Set<Integer> SECTOR_ENCODING_VALID = new HashSet<>(Arrays.asList(
             SECTOR_ENCODING_NORMAL,
@@ -57,6 +58,29 @@ public class IMDImage extends DiskImage {
 
     public static IMDImage fromStream(InputStream imdStream, PrintStream out) throws IOException {
         return new IMDImage(IOUtils.toByteArray(imdStream), out);
+    }
+
+    public IMDImage (int[] mode, CromixFloppyInfo info) {
+        this.header = "IMD 1.17:  4/06/2010 13:59:22\r\n";
+        this.cylinders = info.getCylinders();
+        this.heads = info.getHeads();
+        int offset = 0;
+
+        // First track
+        tracks.add(new IMDTrack(mode[0], 0, 0, info.getSectorsFirstTrack(), info.getBytesPerSectorFirstTrack(), offset));
+        offset += (info.getSectorsFirstTrack() * info.getBytesPerSectorFirstTrack());
+
+        // Second track
+        tracks.add(new IMDTrack(mode[1], 0, 1, info.getSectorsPerTrack(), info.getBytesPerSector(), offset));
+        offset += (info.getSectorsPerTrack() * info.getBytesPerSector());
+
+        // All other tracks
+        for (int c = 1; c < cylinders; c++) {
+            for (int h = 0; h < heads; h++) {
+                tracks.add(new IMDTrack(mode[1], c, h, info.getSectorsPerTrack(), info.getBytesPerSector(), offset));
+                offset += (info.getSectorsPerTrack() * info.getBytesPerSector());
+            }
+        }
     }
 
     public IMDImage(byte[] raw, PrintStream out) {
@@ -193,9 +217,16 @@ public class IMDImage extends DiskImage {
         }
 
         try (OutputStream out = new FileOutputStream(imdFile)) {
+            persist(out);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void persist(OutputStream out) {
+        try {
             out.write(header.getBytes(StandardCharsets.US_ASCII));
             out.write(0x1a);
-
             tracks.forEach(track -> {
                 try {
                     out.write(track.getMode());
@@ -224,9 +255,7 @@ public class IMDImage extends DiskImage {
                     }
                 });
             });
-
             out.flush();
-
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -43,7 +43,7 @@ public class CromixHFEFtarTest extends CromemcoTest {
         HFEImage image = new HFEImage(IOUtils.toByteArray(imdFile));
         assertThat(image, notNullValue());
 
-        CromixFtar ftar = new CromixFtar(new FTarHFEDisk(image, System.out), System.out);
+        CromixFtar ftar = new CromixFtar(new FTarHFEDisk(image, System.out));
         ftar.list(System.out);
         System.out.println("Done");
     }
@@ -62,7 +62,7 @@ public class CromixHFEFtarTest extends CromemcoTest {
         }
         extractDir.mkdirs();
 
-        CromixFtar ftar = new CromixFtar(new FTarHFEDisk(image, getDummyPrintStream()), getDummyPrintStream());
+        CromixFtar ftar = new CromixFtar(new FTarHFEDisk(image, getDummyPrintStream()));
         ftar.extract(extractDir.getPath(), System.out);
     }
 }

@@ -1,6 +1,7 @@
 package au.wildie.m68k.cromixfs.disk.imd;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import static au.wildie.m68k.cromixfs.disk.imd.ImageException.CODE_ERROR;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class IMDTrack {
     private int mode;
     private int cylinder;
@@ -19,6 +21,21 @@ public class IMDTrack {
     private int[] sectorMap;
     private int offset;
     private List<IMDSector> sectors =  new ArrayList<>();
+
+    public IMDTrack(int mode, int cylinder, int head, int sectorCount, int sectorSize, int offset) {
+        this.mode = mode;
+        this.cylinder = cylinder;
+        this.head = head;
+        this.sectorCount = sectorCount;
+        this.sectorSize = sectorSize;
+        this.offset = offset;
+
+        sectorMap = new int[sectorCount];
+        for (int i = 0; i < sectorCount; i++) {
+            sectorMap[i] = i + 1;
+            sectors.add(new IMDSector(i+ 1, offset + i * sectorSize, sectorSize));
+        }
+    }
 
     public IMDSector getSector(int sectorNumber) {
         return sectors.stream()

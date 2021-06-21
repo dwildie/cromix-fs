@@ -62,7 +62,7 @@ public class FileSystems {
             return new CromixFileSystem(disk);
         }
 
-        CromixFtar ftar = new CromixFtar(new FTarIMDDisk(image, out), out);
+        CromixFtar ftar = new CromixFtar(new FTarIMDDisk(image, out));
         if (ftar.isValid()) {
             return ftar;
         }
@@ -89,7 +89,7 @@ public class FileSystems {
             }
         }
 
-        CromixFtar ftar = new CromixFtar(new FTarHFEDisk(image, out), out);
+        CromixFtar ftar = new CromixFtar(new FTarHFEDisk(image, out));
         if (ftar.isValid()) {
             return ftar;
         }

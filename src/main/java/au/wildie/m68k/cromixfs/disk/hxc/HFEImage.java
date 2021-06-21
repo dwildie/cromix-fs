@@ -4,6 +4,7 @@ import static au.wildie.m68k.cromixfs.disk.imd.ImageException.CODE_END_OF_DISK;
 import static au.wildie.m68k.cromixfs.utils.Int68000.from2BytesUnsigned;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 import au.wildie.m68k.cromixfs.disk.DiskImage;
 import au.wildie.m68k.cromixfs.disk.imd.ImageException;
@@ -60,6 +61,11 @@ public class HFEImage extends DiskImage  {
             throw new ImageException(CODE_END_OF_DISK, String.format("Cylinder %d does not exist", cylinder));
         }
         return getTrack(cylinder, head).getSectors().get(sectorNumber - 1);
+    }
+
+    @Override
+    public void persist(OutputStream archive) {
+        // TODO
     }
 
     public HFETrack getTrack(int cylinder, int head) {
