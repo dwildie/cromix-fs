@@ -45,7 +45,7 @@ public class CromixFloppyInfo {
     public static CromixFloppyInfo SMALL_SINGLE_DENSITY = new CromixFloppyInfo(40, 2,  5, 18, 512, 128, 13, x5s);
 
     public static String getFormatLabel(byte[] sector) {
-        return new String(Arrays.copyOfRange(sector, LABEL_START, LABEL_END)).replaceAll("\\P{InBasic_Latin}", "").trim();
+        return new String(Arrays.copyOfRange(sector, LABEL_START, LABEL_END)).replaceAll("\\P{InBasic_Latin}", " ").trim();
     }
 
     public static void setFormatLabel(String formatLabel, byte[] sector) {

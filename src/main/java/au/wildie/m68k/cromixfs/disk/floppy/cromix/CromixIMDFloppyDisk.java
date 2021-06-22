@@ -5,6 +5,7 @@ import au.wildie.m68k.cromixfs.disk.floppy.IMDFloppyImage;
 import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
 import au.wildie.m68k.cromixfs.disk.imd.IMDSector;
 import au.wildie.m68k.cromixfs.disk.imd.IMDTrack;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
 
@@ -22,7 +23,7 @@ public class CromixIMDFloppyDisk extends IMDFloppyImage {
             uniform = true;
             info = CromixFloppyInfo.getUniform(image.getCylinders(), image.getHeads(), image.getTrack(0, 0).getSectorCount(), track0SectorSize);
         } else {
-            if (getFormatLabel().charAt(0) != 'C') {
+            if (StringUtils.isBlank(super.getFormatLabel()) || super.getFormatLabel().charAt(0) != 'C') {
                 throw new IMDFloppyException("Not a cromix disk");
             }
 

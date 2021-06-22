@@ -15,6 +15,7 @@ public class FileSystemsTest extends CromemcoTest {
     private static final String CLDSDD_FTAR_IMAGE = "imd/093CR151.IMD";
     private static final String CLDSDD_FS_IMAGE = "imd/094CR162.IMD";
     private static final String UNIFORM_FS_IMAGE = "imd/904C3140.IMD";
+    private static final String DAMAGED_FS_IMAGE = "imd/720CX172.IMD";
 
     @Test
     public void getIMDFloppyFileSystem_ftar() throws IOException {
@@ -22,6 +23,14 @@ public class FileSystemsTest extends CromemcoTest {
         FileSystemOps fs = FileSystems.getIMDFloppyFileSystem(src, getDummyPrintStream());
         assertThat(fs, notNullValue());
         assertThat(fs, instanceOf(CromixFtar.class));
+    }
+
+    @Test
+    public void getIMDFloppyFileSystem_damaged() throws IOException {
+        InputStream src = getClass().getClassLoader().getResourceAsStream(DAMAGED_FS_IMAGE);
+        FileSystemOps fs = FileSystems.getIMDFloppyFileSystem(src, getDummyPrintStream());
+        assertThat(fs, notNullValue());
+        assertThat(fs, instanceOf(CromixFileSystem.class));
     }
 
     @Test

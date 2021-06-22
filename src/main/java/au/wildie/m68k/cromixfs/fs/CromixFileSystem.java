@@ -67,6 +67,8 @@ public class CromixFileSystem implements FileSystem {
     @Getter
     private final DiskInterface disk;
 
+    private final int versionMinor;
+    private final int versionMajor;
     private final int inodeFirst;
     private final int inodeCount;
     private final int blockCount;
@@ -94,6 +96,8 @@ public class CromixFileSystem implements FileSystem {
             throw new CromixFileSystemException("Not a valid cromix filesystem");
         }
 
+        versionMajor = superBlock[SUPER_VERSION_OFFSET];
+        versionMinor = superBlock[SUPER_VERSION_OFFSET + 1];
         inodeFirst = readWord(superBlock, SUPER_INODE_FIRST_OFFSET);
         inodeCount = readWord(superBlock, SUPER_INODE_COUNT_OFFSET);
         blockCount = readDWord(superBlock, SUPER_BLOCK_COUNT_OFFSET);

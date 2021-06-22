@@ -32,6 +32,7 @@ public class IMDImage extends DiskImage {
     public static final int SECTOR_ENCODING_ERROR_COMPRESSED = 6;
     public static final int SECTOR_ENCODING_DELETED_ERROR = 7;
     public static final int SECTOR_ENCODING_DELETED_ERROR_COMPRESSED = 8;
+    public static final int SECTOR_ENCODING_UNKNOWN = 9;
 
     private static final Set<Integer> SECTOR_ENCODING_VALID = new HashSet<>(Arrays.asList(
             SECTOR_ENCODING_NORMAL,
@@ -203,6 +204,7 @@ public class IMDImage extends DiskImage {
 
         out.println(header);
         out.printf("Read %d tracks%n", tracks.size());
+        out.printf("%n%s%n", getSectorErrorSummary());
     }
 
     public int size() {
@@ -354,6 +356,10 @@ public class IMDImage extends DiskImage {
         return cylinders;
     }
 
+    public static boolean isValidEncoding(IMDSector sector) {
+        return SECTOR_ENCODING_VALID.contains(sector.getEncoding());
+    }
+
     public Integer getTrackCount(int head) {
         return new Long(tracks.stream()
                 .filter(track -> track.getHead() == head)
@@ -363,8 +369,37 @@ public class IMDImage extends DiskImage {
     public Integer getSectorErrorCount() {
         return (int)tracks.stream()
                 .flatMap(track -> track.getSectors().stream())
-                .filter(sector -> !SECTOR_ENCODING_VALID.contains(sector.getEncoding()))
+                .filter(sector -> !isValidEncoding(sector))
                 .count();
+    }
+
+    public String getSectorErrorSummary() {
+        Integer[] counts = new Integer[]{0,0,0,0,0,0,0,0,0,0};
+        tracks.stream()
+                .flatMap(track -> track.getSectors().stream())
+                .filter(sector -> !isValidEncoding(sector))
+                .map(IMDSector::getEncoding)
+                .map(encoding -> encoding >= SECTOR_ENCODING_UNKNOWN ? SECTOR_ENCODING_UNKNOWN : encoding)
+                .forEach(encoding -> counts[encoding]++);
+
+        StringBuilder summary = new StringBuilder();
+        if (counts[SECTOR_ENCODING_UNAVAILABLE] > 0) {
+            summary.append(String.format("  Unavailable:    %d\n", counts[SECTOR_ENCODING_UNAVAILABLE]));
+        }
+        if (counts[SECTOR_ENCODING_ERROR] > 0 || counts[SECTOR_ENCODING_ERROR_COMPRESSED] > 0) {
+            summary.append(String.format("  Errors:         %d\n", counts[SECTOR_ENCODING_ERROR] + counts[SECTOR_ENCODING_ERROR_COMPRESSED]));
+
+        }
+        if (counts[SECTOR_ENCODING_DELETED_ERROR] > 0 || counts[SECTOR_ENCODING_DELETED_ERROR_COMPRESSED] > 0) {
+            summary.append(String.format("  Deleted Errors: %d\n", counts[SECTOR_ENCODING_DELETED_ERROR] + counts[SECTOR_ENCODING_DELETED_ERROR_COMPRESSED]));
+        }
+
+        if (summary.length() == 0) {
+            return "No sector errors";
+        }
+
+        summary.insert(0, "Sector errors:\n");
+        return summary.toString();
     }
 
     public void verify(PrintStream out) {

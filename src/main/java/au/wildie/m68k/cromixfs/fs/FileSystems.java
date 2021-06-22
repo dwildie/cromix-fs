@@ -57,9 +57,13 @@ public class FileSystems {
         }
 
         // Could be uniform or ftar
-        DiskInterface disk = new CromixIMDFloppyDisk(image, out);
-        if (CromixFileSystem.isValid(disk)) {
-            return new CromixFileSystem(disk);
+        try {
+            DiskInterface disk = new CromixIMDFloppyDisk(image, out);
+            if (CromixFileSystem.isValid(disk)) {
+                return new CromixFileSystem(disk);
+            }
+        } catch (IMDFloppyException ignored) {
+            // swallow it
         }
 
         CromixFtar ftar = new CromixFtar(new FTarIMDDisk(image, out));

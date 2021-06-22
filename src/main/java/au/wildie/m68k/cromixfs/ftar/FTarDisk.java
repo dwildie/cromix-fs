@@ -47,7 +47,7 @@ public abstract class FTarDisk implements DiskInfo {
                     formatLabel += image.getHeads() == 2 ? "DS" : "SS";
                     formatLabel += trackInfo[1].getSectorCount() == 10 ? "DD" : "SD";
                 }
-                formatLabel += "!";
+                formatLabel += "?";
             }
 
             initialBlockNumber = 1;

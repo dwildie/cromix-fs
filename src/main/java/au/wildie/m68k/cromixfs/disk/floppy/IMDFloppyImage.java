@@ -3,8 +3,10 @@ package au.wildie.m68k.cromixfs.disk.floppy;
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
 import au.wildie.m68k.cromixfs.disk.floppy.cromix.CromixFloppyInfo;
 import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
+import au.wildie.m68k.cromixfs.disk.imd.IMDSector;
 import au.wildie.m68k.cromixfs.disk.imd.IMDTrack;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
 
@@ -15,8 +17,40 @@ public abstract class IMDFloppyImage implements DiskInterface {
 
     public IMDFloppyImage(IMDImage image, PrintStream out) {
         this.image = image;
-        this.formatLabel = CromixFloppyInfo.getFormatLabel(image.getSector(0,0,1).getData());
+        this.formatLabel = obtainFormatLabel();
         this.out = out;
+    }
+
+    protected String obtainFormatLabel() {
+        IMDSector zero = image.getSector(0,0,1);
+        if (IMDImage.isValidEncoding(zero)) {
+            String formatLabel = CromixFloppyInfo.getFormatLabel(zero.getData());
+            if (StringUtils.isNotBlank(formatLabel)) {
+                return formatLabel;
+            }
+        }
+
+        // Sector is not available or no label, generate label from disk params
+        if (image.getTrack(0, 0).getSectorSize() == image.getTrack(0, 1).getSectorSize()) {
+            // Is uniform
+            return "";
+        }
+
+        String guess = "C";
+        if (image.getCylinders() == 77) {
+            // Large
+            guess += "L";
+            guess += image.getHeads() == 2 ? "DS" : "SS";
+            guess += image.getTrack(0, 1).getSectorCount() == 16 ? "DD" : "SD";
+        } else {
+            // Small
+            guess += "S";
+            guess += image.getHeads() == 2 ? "DS" : "SS";
+            guess += image.getTrack(0, 1).getSectorCount() == 10 ? "DD" : "SD";
+        }
+        guess += "?";
+
+        return guess;
     }
 
     @Override
