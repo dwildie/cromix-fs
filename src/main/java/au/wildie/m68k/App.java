@@ -50,7 +50,7 @@ public class App
             if (file.exists()) {
                 file.delete();
             }
-            if (!file.getParentFile().exists()) {
+            if (file.getParentFile() != null && !file.getParentFile().exists()) {
                 file.getParentFile().mkdirs();
             }
             try (FileOutputStream archive = new FileOutputStream(file)) {
