@@ -104,6 +104,10 @@ public class CromixFileSystem implements FileSystem {
         blockSize = readDWord(superBlock, SUPER_BLOCK_SIZE_OFFSET) == 0 ? superBlock.length : readDWord(superBlock, SUPER_BLOCK_SIZE_OFFSET);
     }
 
+    public String getVersion() {
+        return String.format("%02x%02x", versionMajor, versionMinor);
+    }
+
     @Override
     public String getName() {
         return "Cromix filesystem";
@@ -111,6 +115,7 @@ public class CromixFileSystem implements FileSystem {
 
     @Override
     public void list(PrintStream out) throws IOException {
+        out.printf("Version: %s\n", getVersion());
         readDirectory("", readINode( 1), LIST, null, out);
     }
 

@@ -23,6 +23,11 @@ public class CromixFloppyInfo {
     private static final byte[] x5d = {0,4,8,2,6,1,5,9,3,7};                   /* Cromix 5" DD */
     private static final byte[] x5s = {0,2,4,1,3};                             /* Cromix 5" SD */
 
+    private static final byte[] secTrkLSD = {26, 15,  8,  4};
+    private static final byte[] secTrkLDD = {52, 26, 15,  8};
+    private static final byte[] secTrkSSD = {16,  9,  5,  2};
+    private static final byte[] secTrkSDD = {24, 16,  9,  5};
+
     private final int cylinders;
     private final int heads;
     private final int sectorsPerTrack;
@@ -63,7 +68,16 @@ public class CromixFloppyInfo {
         return get(diskSize, diskSides, diskDensity);
     }
 
-    public static CromixFloppyInfo getUniform(int cylinders, int heads, int sectors, int sectorSize) {
+    public static CromixFloppyInfo getUniform(int cylinders, int heads, int sectorSize, int mode) {
+
+        int sectors;
+        if (cylinders == 77) {
+            // Large
+            sectors = secTrkLDD[2];
+        } else {
+            // Small
+            sectors = secTrkSDD[2];
+        }
         return new CromixFloppyInfo(cylinders, heads, sectors, sectors, sectorSize, sectorSize,0,null);
     }
 

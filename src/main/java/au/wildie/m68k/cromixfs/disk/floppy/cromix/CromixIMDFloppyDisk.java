@@ -21,7 +21,7 @@ public class CromixIMDFloppyDisk extends IMDFloppyImage {
         int track1SectorSize = image.getTrack(0, 1).getSectorSize();
         if (track0SectorSize == track1SectorSize) {
             uniform = true;
-            info = CromixFloppyInfo.getUniform(image.getCylinders(), image.getHeads(), image.getTrack(0, 0).getSectorCount(), track0SectorSize);
+            info = CromixFloppyInfo.getUniform(image.getCylinders(), image.getHeads(), track0SectorSize, image.getTrack(0, 0).getMode());
         } else {
             if (StringUtils.isBlank(super.getFormatLabel()) || super.getFormatLabel().charAt(0) != 'C') {
                 throw new IMDFloppyException("Not a cromix disk");

@@ -80,6 +80,11 @@ public class CDOSFileSystem implements FileSystem {
     }
 
     @Override
+    public String getVersion() {
+        return "";
+    }
+
+    @Override
     public void list(PrintStream out) throws IOException {
         for (int i = 0; i < directoryRecords * entriesPerRecord; i++) {
             byte[] entry = getDirectoryEntry(i);

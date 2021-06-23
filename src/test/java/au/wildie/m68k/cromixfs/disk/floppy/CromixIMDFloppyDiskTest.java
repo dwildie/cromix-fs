@@ -17,6 +17,7 @@ public class CromixIMDFloppyDiskTest {
     private static final String CLDSDD_IMAGE = "imd/848CR162.IMD";
     private static final String UNIFORM_IMAGE = "imd/904C3140.IMD";
     private static final String UNIFORM1_IMAGE = "imd/152C0241.IMD";
+    private static final String UNIFORM2_IMAGE = "imd/158DBMS.IMD";
     private static final String DAMAGED_FS_IMAGE = "imd/720CX172.IMD";
 
     private static final String EXTRACT_PATH = "/tmp/extract";

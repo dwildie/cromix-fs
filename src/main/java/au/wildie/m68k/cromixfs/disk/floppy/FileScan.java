@@ -44,16 +44,17 @@ public class FileScan {
 
         System.out.print("\n\n");
         System.out.print("         total  tracks  sector\n");
-        System.out.print("label   tracks  / side  errors  usage              image file\n");
+        System.out.print("label   tracks  / side  errors  usage              version  image file\n");
         info.stream()
                 .filter(entry -> entry.getError() == null)
                 .sorted(Comparator.comparing(Info::getRelativePath))
-                .forEach(entry -> System.out.printf("%-7s    %3d  %-7s  %5d  %-17s  %s\n",
+                .forEach(entry -> System.out.printf("%-7s    %3d  %-7s  %5d   %-17s %7s  %s\n",
                         Optional.ofNullable(entry.getFormatLabel()).map(label -> label.replaceAll("\\P{InBasic_Latin}", " ").trim()).orElse(""),
                         entry.getTracks(),
                         headTracks(entry),
                         entry.getSectorErrors(),
                         entry.getFileSystem(),
+                        entry.getVersion(),
                         entry.getRelativePath()));
     }
 
@@ -93,6 +94,7 @@ public class FileScan {
             info.setHead1Tracks(disk.getTrackCount(1));
             info.setSectorErrors(disk.getSectorErrorCount());
             info.setFileSystem(fs.getName());
+            info.setVersion(fs.getVersion());
         } catch (Exception e) {
             info.setError(e.getMessage());
         }
@@ -111,5 +113,6 @@ public class FileScan {
         private Integer sectorErrors;
         private String error;
         private String fileSystem;
+        private String version;
     }
 }

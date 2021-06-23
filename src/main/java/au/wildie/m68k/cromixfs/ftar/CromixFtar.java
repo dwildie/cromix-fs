@@ -46,6 +46,11 @@ public class CromixFtar implements FileSystemOps {
         return disk;
     }
 
+    @Override
+    public String getVersion() {
+        return "";
+    }
+
     public boolean isValid() {
         // Look for a valid ftar header block
         while (true) {

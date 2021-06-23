@@ -11,4 +11,5 @@ public interface FileSystemOps {
     void extract(String path, PrintStream out) throws IOException;
     String getName();
     DiskInfo getDisk();
+    String getVersion();
 }
