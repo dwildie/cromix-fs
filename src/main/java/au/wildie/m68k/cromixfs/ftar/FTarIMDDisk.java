@@ -10,8 +10,8 @@ import java.util.Arrays;
 public class FTarIMDDisk extends FTarDisk {
     public FTarIMDDisk(IMDImage image, PrintStream out) {
         super(image,
-              FTarTrackInfo.from(image.getTrack(0,0)),
-              FTarTrackInfo.from(image.getTrack(0, 1)),
+              FTarTrackInfo.from(image.getTrack(0)),
+              FTarTrackInfo.from(image.getTrack(1)),
               out);
     }
 

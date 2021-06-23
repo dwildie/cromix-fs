@@ -17,8 +17,8 @@ public class CromixIMDFloppyDisk extends IMDFloppyImage {
     public CromixIMDFloppyDisk(IMDImage image, PrintStream out) {
         super(image, out);
 
-        int track0SectorSize = image.getTrack(0, 0).getSectorSize();
-        int track1SectorSize = image.getTrack(1, 0).getSectorSize();
+        int track0SectorSize = image.getTrack(0).getSectorSize();
+        int track1SectorSize = image.getTrack(1).getSectorSize();
         if (track0SectorSize == track1SectorSize) {
             uniform = true;
             info = CromixFloppyInfo.getUniform(image.getCylinders(), image.getHeads(), track0SectorSize, image.getTrack(0, 0).getMode());
@@ -107,13 +107,4 @@ public class CromixIMDFloppyDisk extends IMDFloppyImage {
         return (block + info.getBlockOffset()) % info.getSectorsPerTrack();
     }
 
-//    @Override
-//    public void checkSupported() {
-//        if (diskDensity != DOUBLE) {
-//            throw new RuntimeException(String.format("%s density disks are not supported", diskDensity));
-//        }
-//        if (diskSides != DiskSides.DOUBLE) {
-//            throw new RuntimeException(String.format("%s sided disks are not supported", diskSides));
-//        }
-//    }
 }

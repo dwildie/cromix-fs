@@ -31,7 +31,7 @@ public abstract class IMDFloppyImage implements DiskInterface {
         }
 
         // Sector is not available or no label, generate label from disk params
-        if (image.getTrack(0, 0).getSectorSize() == image.getTrack(0, 1).getSectorSize()) {
+        if (image.getTrack(0).getSectorSize() == image.getTrack(1).getSectorSize()) {
             // Is uniform
             return "";
         }
@@ -41,12 +41,12 @@ public abstract class IMDFloppyImage implements DiskInterface {
             // Large
             guess += "L";
             guess += image.getHeads() == 2 ? "DS" : "SS";
-            guess += image.getTrack(0, 1).getSectorCount() == 16 ? "DD" : "SD";
+            guess += image.getTrack(1).getSectorCount() == 16 ? "DD" : "SD";
         } else {
             // Small
             guess += "S";
             guess += image.getHeads() == 2 ? "DS" : "SS";
-            guess += image.getTrack(0, 1).getSectorCount() == 10 ? "DD" : "SD";
+            guess += image.getTrack(1).getSectorCount() == 10 ? "DD" : "SD";
         }
         guess += "?";
 

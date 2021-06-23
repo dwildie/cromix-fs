@@ -149,10 +149,13 @@ public abstract class FTarDisk implements DiskInfo {
         if (block < getCylinderBlockCount(0)) {
             return 0;
         }
-        return 1 + ((block - getCylinderBlockCount(0)) / (2 * trackInfo[1].getSectorCount()));
+        return 1 + ((block - getCylinderBlockCount(0)) / (getHeads() * trackInfo[1].getSectorCount()));
     }
 
     protected int getHeadForBlock(int block) {
+        if (getHeads() == 1) {
+            return 0;
+        }
         if (block < trackInfo[0].getBlockCount()) {
             return 0;
         }

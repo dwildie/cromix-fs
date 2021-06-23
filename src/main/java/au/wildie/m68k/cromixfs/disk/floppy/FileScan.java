@@ -40,7 +40,7 @@ public class FileScan {
         info.stream()
                 .filter(entry -> entry.getError() != null)
                 .sorted(Comparator.comparing(Info::getRelativePath))
-                .forEach(entry -> System.out.printf("\"%s\" %s\n", entry.getError(), entry.getRelativePath()));
+                .forEach(entry -> System.out.printf("Error: \"%s\" %s\n", entry.getError(), entry.getRelativePath()));
 
         System.out.print("\n\n");
         System.out.print("         total  tracks  sector\n");

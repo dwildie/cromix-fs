@@ -8,7 +8,7 @@ public class FileScanTest {
 
     @Test
     public void scan() throws IOException {
-        FileScan scan = new FileScan("/home/dwildie/cromemcos/m/cromemco/code/disks");
+        FileScan scan = new FileScan("/home/dwildie/cromemcos/m/cromemco/code/disks/IMD");
         scan.scan();
     }
 }

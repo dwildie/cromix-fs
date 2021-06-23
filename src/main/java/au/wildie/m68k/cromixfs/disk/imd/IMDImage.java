@@ -325,6 +325,10 @@ public class IMDImage extends DiskImage {
         }
     }
 
+    public IMDTrack getTrack(int trackIndex) {
+        return tracks.get(trackIndex);
+    }
+
     public IMDTrack getTrack(int cylinderNumber, int headNumber) {
         if (cylinderNumber >= this.cylinders) {
             throw new ImageException(CODE_END_OF_DISK, String.format("Cylinder %d does not exist", cylinderNumber));
