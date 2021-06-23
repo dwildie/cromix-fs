@@ -38,16 +38,20 @@ public class CromixFloppyInfo {
     private final byte[] interleave;
 
     // First track: 26 * 128 = 3328 bytes, 0x0D00, Other tracks: 16 * 512 = 8192 bytes, 0x2000
-    public static CromixFloppyInfo LARGE_DOUBLE_DENSITY = new CromixFloppyInfo(77, 2, 16, 26, 512, 128,10, x8d);
+    public static CromixFloppyInfo LARGE_DOUBLE_DENSITY_DS = new CromixFloppyInfo(77, 2, 16, 26, 512, 128,10, x8d);
+    public static CromixFloppyInfo LARGE_DOUBLE_DENSITY_SS = new CromixFloppyInfo(77, 1, 16, 26, 512, 128,10, x8d);
 
     // First track: 26 * 128 = 3328 bytes, 0x0D00, Other tracks:  8 * 512 = 4096 bytes, 0x1000
-    public static CromixFloppyInfo LARGE_SINGLE_DENSITY = new CromixFloppyInfo(77, 2, 8, 26, 512, 128, 18, x8s);
+    public static CromixFloppyInfo LARGE_SINGLE_DENSITY_DS = new CromixFloppyInfo(77, 2, 8, 26, 512, 128, 18, x8s);
+    public static CromixFloppyInfo LARGE_SINGLE_DENSITY_SS = new CromixFloppyInfo(77, 1, 8, 26, 512, 128, 18, x8s);
 
     // First track: 18 * 128 = 2304 bytes, 0x0900, Other tracks: 10 * 512 = 5120 bytes, 0x1400
-    public static CromixFloppyInfo SMALL_DOUBLE_DENSITY = new CromixFloppyInfo(40, 2, 10, 18, 512, 128, 6, x5d);
+    public static CromixFloppyInfo SMALL_DOUBLE_DENSITY_DS = new CromixFloppyInfo(40, 2, 10, 18, 512, 128, 6, x5d);
+    public static CromixFloppyInfo SMALL_DOUBLE_DENSITY_SS = new CromixFloppyInfo(40, 1, 10, 18, 512, 128, 6, x5d);
 
     // First track: 18 * 128 = 2304 bytes, 0x0900, Other tracks:  5 * 512 = 2560 bytes, 0x0700
-    public static CromixFloppyInfo SMALL_SINGLE_DENSITY = new CromixFloppyInfo(40, 2,  5, 18, 512, 128, 13, x5s);
+    public static CromixFloppyInfo SMALL_SINGLE_DENSITY_DS = new CromixFloppyInfo(40, 2,  5, 18, 512, 128, 13, x5s);
+    public static CromixFloppyInfo SMALL_SINGLE_DENSITY_SS = new CromixFloppyInfo(40, 1,  5, 18, 512, 128, 13, x5s);
 
     public static String getFormatLabel(byte[] sector) {
         return new String(Arrays.copyOfRange(sector, LABEL_START, LABEL_END)).replaceAll("\\P{InBasic_Latin}", " ").trim();
@@ -84,18 +88,18 @@ public class CromixFloppyInfo {
     public static CromixFloppyInfo get(DiskSize diskSize, DiskSides diskSides, DiskDensity  diskDensity) {
         if (diskSize == LARGE) {
             if (diskDensity == DOUBLE) {
-                return LARGE_DOUBLE_DENSITY;
+                return diskSides == DiskSides.DOUBLE ? LARGE_DOUBLE_DENSITY_DS : LARGE_DOUBLE_DENSITY_SS;
             }
             if (diskDensity == SINGLE) {
-                return LARGE_SINGLE_DENSITY;
+                return diskSides == DiskSides.DOUBLE ? LARGE_SINGLE_DENSITY_DS : LARGE_SINGLE_DENSITY_SS;
             }
         }
         if (diskSize == SMALL) {
             if (diskDensity == DOUBLE) {
-                return SMALL_DOUBLE_DENSITY;
+                return diskSides == DiskSides.DOUBLE ? SMALL_DOUBLE_DENSITY_DS : SMALL_DOUBLE_DENSITY_SS;
             }
             if (diskDensity == SINGLE) {
-                return SMALL_SINGLE_DENSITY;
+                return diskSides == DiskSides.DOUBLE ? SMALL_SINGLE_DENSITY_DS : SMALL_SINGLE_DENSITY_SS;
             }
         }
         throw new IMDFloppyException(String.format("Unsupported Cromix disk format: size %s, sides %s, density %s", diskSize, diskSides, diskDensity));

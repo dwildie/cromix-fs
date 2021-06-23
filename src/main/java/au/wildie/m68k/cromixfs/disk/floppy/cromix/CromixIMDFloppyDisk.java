@@ -18,7 +18,7 @@ public class CromixIMDFloppyDisk extends IMDFloppyImage {
         super(image, out);
 
         int track0SectorSize = image.getTrack(0, 0).getSectorSize();
-        int track1SectorSize = image.getTrack(0, 1).getSectorSize();
+        int track1SectorSize = image.getTrack(1, 0).getSectorSize();
         if (track0SectorSize == track1SectorSize) {
             uniform = true;
             info = CromixFloppyInfo.getUniform(image.getCylinders(), image.getHeads(), track0SectorSize, image.getTrack(0, 0).getMode());
@@ -96,7 +96,7 @@ public class CromixIMDFloppyDisk extends IMDFloppyImage {
     }
 
     private int getCylinderForBlock(int block) {
-        return (block + info.getBlockOffset()) / (2 * info.getSectorsPerTrack());
+        return (block + info.getBlockOffset()) / (info.getHeads() * info.getSectorsPerTrack());
     }
 
     private int getHeadForBlock(int block) {

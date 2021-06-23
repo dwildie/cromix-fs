@@ -16,7 +16,7 @@ public class FTarIMDDisk extends FTarDisk {
     }
 
     public static FTarIMDDisk create(String formatLabel, PrintStream out) {
-        IMDImage image = new IMDImage(new int[] {0, 3}, CromixFloppyInfo.LARGE_DOUBLE_DENSITY);
+        IMDImage image = new IMDImage(new int[] {0, 3}, CromixFloppyInfo.LARGE_DOUBLE_DENSITY_DS);
         IMDSector zero = image.getSector(0, 0, 1);
         Arrays.fill(zero.getData(), (byte)0);
         CromixFloppyInfo.setFormatLabel(formatLabel, zero.getData());

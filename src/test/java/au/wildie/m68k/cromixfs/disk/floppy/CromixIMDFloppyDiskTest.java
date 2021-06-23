@@ -8,6 +8,7 @@ import au.wildie.m68k.cromixfs.fs.FileSystems;
 import au.wildie.m68k.cromixfs.ftar.CromixFtar;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
 import java.io.*;
@@ -15,6 +16,7 @@ import java.nio.file.Paths;
 
 public class CromixIMDFloppyDiskTest {
     private static final String CLDSDD_IMAGE = "imd/848CR162.IMD";
+    private static final String CSSSDD_IMAGE = "imd/348C1105.IMD";
     private static final String UNIFORM_IMAGE = "imd/904C3140.IMD";
     private static final String UNIFORM1_IMAGE = "imd/152C0241.IMD";
     private static final String UNIFORM2_IMAGE = "imd/158DBMS.IMD";
@@ -43,6 +45,14 @@ public class CromixIMDFloppyDiskTest {
     @Test
     public void listDamaged() throws IOException {
         InputStream src = getClass().getClassLoader().getResourceAsStream(DAMAGED_FS_IMAGE);
+        FileSystem fs = (FileSystem)FileSystems.getIMDFloppyFileSystem(src, System.out);
+        fs.list(System.out);
+        System.out.println("done");
+    }
+
+    @Test
+    public void listCSSSDD() throws IOException {
+        InputStream src = getClass().getClassLoader().getResourceAsStream(CSSSDD_IMAGE);
         FileSystem fs = (FileSystem)FileSystems.getIMDFloppyFileSystem(src, System.out);
         fs.list(System.out);
         System.out.println("done");
