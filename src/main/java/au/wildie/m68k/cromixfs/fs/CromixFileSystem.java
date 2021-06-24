@@ -9,6 +9,7 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Date;
 
+import static au.wildie.m68k.cromixfs.fs.CromixTime.TIME_SIZE;
 import static au.wildie.m68k.cromixfs.fs.DumpMode.EXTRACT;
 import static au.wildie.m68k.cromixfs.fs.DumpMode.LIST;
 import static au.wildie.m68k.cromixfs.utils.BinUtils.*;
@@ -21,10 +22,10 @@ public class CromixFileSystem implements FileSystem {
     private static final int SUPER_BLOCK_COUNT_OFFSET       = 0x00c;
     private static final int SUPER_LAST_MODIFIED_OFFSET     = 0x010;
     private static final int SUPER_BLOCK_SIZE_OFFSET        = 0x016;
-    private static final int SUPER_FREE_INODES_OFFSET       = 0x01c;
-    private static final int SUPER_FREE_INODE_LIST_OFFSET   = 0x01e;
-    private static final int SUPER_FREE_BLOCKS_OFFSET       = 0x15e;
-    private static final int SUPER_FREE_BLOCK_LIST_OFFSET   = 0x160;
+    private static final int SUPER_FREE_BLOCK_COUNT_OFFSET  = 0x01c;
+    private static final int SUPER_FREE_BLOCK_LIST_OFFSET   = 0x01e;
+    private static final int SUPER_FREE_INODE_COUNT_OFFSET  = 0x15e;
+    private static final int SUPER_FREE_INODE_LIST_OFFSET   = 0x160;
 
     private static final int INODE_LENGTH = 0x80;
 
@@ -59,7 +60,8 @@ public class CromixFileSystem implements FileSystem {
 
     private static final int BLOCK_POINTER_COUNT = 0x80;
 
-    private static final int TIME_SIZE = 6;
+    private static final int FREE_BLOCK_LIST_SIZE = 80;
+    private static final int FREE_INODE_LIST_SIZE = 80;
 
     // Always use forward slash as per cromix
     private static final String FILE_SEP = "/";
@@ -71,8 +73,13 @@ public class CromixFileSystem implements FileSystem {
     private final int versionMajor;
     private final int inodeFirst;
     private final int inodeCount;
+    private final CromixTime lastModified;
     private final int blockCount;
     private final int blockSize;
+    private final int freeBlockCount;
+    private final int[] freeBlockList;
+    private final int freeInodeCount;
+    private final int[] freeInodeList;
 
     public static boolean isValid(DiskInterface disk) {
         try {
@@ -101,7 +108,18 @@ public class CromixFileSystem implements FileSystem {
         inodeFirst = readWord(superBlock, SUPER_INODE_FIRST_OFFSET);
         inodeCount = readWord(superBlock, SUPER_INODE_COUNT_OFFSET);
         blockCount = readDWord(superBlock, SUPER_BLOCK_COUNT_OFFSET);
+        lastModified = CromixTime.from(Arrays.copyOfRange(superBlock, SUPER_LAST_MODIFIED_OFFSET, SUPER_LAST_MODIFIED_OFFSET + TIME_SIZE));
         blockSize = readDWord(superBlock, SUPER_BLOCK_SIZE_OFFSET) == 0 ? superBlock.length : readDWord(superBlock, SUPER_BLOCK_SIZE_OFFSET);
+        freeBlockCount = readWord(superBlock, SUPER_FREE_BLOCK_COUNT_OFFSET);
+        freeBlockList = new int[FREE_BLOCK_LIST_SIZE];
+        for (int i = 0; i < FREE_BLOCK_LIST_SIZE; i++) {
+            freeBlockList[i] = readDWord(superBlock, SUPER_FREE_BLOCK_LIST_OFFSET + i * 4);
+        }
+        freeInodeCount = readWord(superBlock, SUPER_FREE_INODE_COUNT_OFFSET);
+        freeInodeList = new int[FREE_INODE_LIST_SIZE];
+        for (int i = 0; i < FREE_INODE_LIST_SIZE; i++) {
+            freeInodeList[i] = readDWord(superBlock, SUPER_FREE_INODE_LIST_OFFSET + i * 2);
+        }
     }
 
     public String getVersion() {
@@ -122,6 +140,10 @@ public class CromixFileSystem implements FileSystem {
     @Override
     public void extract(String path, PrintStream out) throws IOException {
         readDirectory("", readINode( 1), EXTRACT, path, out);
+    }
+
+    protected void check() {
+
     }
 
     private void readDirectory(String srcPath, byte[] inode, DumpMode mode, String trgPath, PrintStream out) throws IOException {
@@ -149,7 +171,7 @@ public class CromixFileSystem implements FileSystem {
                         int othP = 0xFF & entryINode[INODE_P_OTH_OFFSET];
                         int lnks = 0xFF & entryINode[INODE_LINKS_OFFSET];
 
-                        CromixTimeUtils modified = new CromixTimeUtils(Arrays.copyOfRange(entryINode, INODE_MODIFIED_OFFSET, INODE_MODIFIED_OFFSET + TIME_SIZE));
+                        CromixTime modified = CromixTime.from(Arrays.copyOfRange(entryINode, INODE_MODIFIED_OFFSET, INODE_MODIFIED_OFFSET + TIME_SIZE));
 
                         if (type == INODE_TYPE_CHAR || type == INODE_TYPE_BLOCK) {
                             int major = 0xFF & entryINode[INODE_MAJOR_OFFSET];
@@ -197,7 +219,7 @@ public class CromixFileSystem implements FileSystem {
         out.print("");
     }
 
-    private void extractFile(byte[] inode, int size, CromixTimeUtils modified, String path) throws IOException {
+    private void extractFile(byte[] inode, int size, CromixTime modified, String path) throws IOException {
         int remainingBytes = size;
         File file = new File(path);
 

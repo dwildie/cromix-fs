@@ -14,6 +14,15 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CromixTime {
+    public static final int TIME_SIZE = 6;
+    private static final int YEAR = 0;
+    private static final int MONTH = 1;
+    private static final int DAY = 2;
+    private static final int HOUR = 3;
+    private static final int MINUTE = 4;
+    private static final int SECOND = 5;
+
+
     private byte year;           // year 0 .. 99
     private byte month;          // month 1 .. 12
     private byte day;            // day 1 .. 31
@@ -95,14 +104,25 @@ public class CromixTime {
         return ct;
     }
 
+    public static CromixTime from(byte[] raw) {
+        CromixTime ct = new CromixTime();
+        ct.year = raw[YEAR];
+        ct.month = raw[MONTH];
+        ct.day = raw[DAY];
+        ct.hour = raw[HOUR];
+        ct.minute = raw[MINUTE];
+        ct.second = raw[SECOND];
+        return ct;
+    }
+
     public byte[] toBytes() {
         byte[] data = new byte[6];
-        data[0] = year;
-        data[1] = month;
-        data[2] = day;
-        data[3] = hour;
-        data[4] = minute;
-        data[5] = second;
+        data[YEAR] = year;
+        data[MONTH] = month;
+        data[DAY] = day;
+        data[HOUR] = hour;
+        data[MINUTE] = minute;
+        data[SECOND] = second;
         return data;
     }
 
