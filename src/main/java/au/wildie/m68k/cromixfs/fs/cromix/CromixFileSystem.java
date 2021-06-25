@@ -50,9 +50,23 @@ public class CromixFileSystem implements FileSystem {
         for (int i = 0; i < superBlock.getInodeCount() / INODES_PER_BLOCK; i++) {
             byte[] block = disk.getBlock(superBlock.getFirstInode() + i);
             for (int j = 0; j < INODES_PER_BLOCK; j++) {
-                new Inode(i * INODES_PER_BLOCK + j + 1).toBytes(block, (superBlock.getBlockSize() / INODES_PER_BLOCK) * j);
+                Inode inode = new Inode(i * INODES_PER_BLOCK + j + 1);
+                if (inode.getNumber() == 1) {
+                    // Create as the root inode
+                    inode.setParent(1);
+                    inode.setType(DIRECTORY);
+                    inode.setLinks(1);
+                    inode.setUserPermission(0xFF);
+                    inode.setGroupPermission(0x03);
+                    inode.setOtherPermission(0x03);
+                    inode.setCreated(CromixTime.now());
+                    inode.setModified(CromixTime.now());
+                    inode.setAccessed(CromixTime.now());
+                }
+                inode.toBytes(block, (superBlock.getBlockSize() / INODES_PER_BLOCK) * j);
             }
         }
+
 
         // Create the free block list
         FreeBlock freeBlock = FreeBlock.create(superBlock);

@@ -51,6 +51,8 @@ public class CromixFileSystemTest {
 
         CromixFileSystemStats stats = fs.check(System.out);
         assertThat(stats, notNullValue());
+
+        fs.list(System.out);
     }
 
     @Test
@@ -65,10 +67,11 @@ public class CromixFileSystemTest {
         CromixFileSystemStats stats = fs.check(System.out);
         assertThat(stats, notNullValue());
 
-        int expectedInodes = 508;
+        int expectedFreeInodes = 507;
+        int expectedTotalInodes = 508;
         int expectedBlocks = 2307;
 
-        assertStats(stats, expectedInodes, expectedBlocks);
+        assertStats(stats, expectedFreeInodes, expectedTotalInodes, expectedBlocks);
 
         File file = new File("/tmp/created.imd");
         if (file.exists()) {
@@ -92,21 +95,21 @@ public class CromixFileSystemTest {
             stats = fs.check(System.out);
             assertThat(stats, notNullValue());
 
-            assertStats(stats, expectedInodes, expectedBlocks);
+            assertStats(stats, expectedFreeInodes, expectedTotalInodes, expectedBlocks);
         }
     }
 
-    private void assertStats(CromixFileSystemStats stats, int expectedInodes, int expectedBlocks) {
-        assertThat(stats.getInodeStats().getDirectoryInodes(), is(0));
+    private void assertStats(CromixFileSystemStats stats, int expectedFreeInodes, int expectedTotalInodes, int expectedBlocks) {
+        assertThat(stats.getInodeStats().getDirectoryInodes(), is(1));
         assertThat(stats.getInodeStats().getFileInodes(), is(0));
         assertThat(stats.getInodeStats().getDeviceInodes(), is(0));
         assertThat(stats.getInodeStats().getPipeInodes(), is(0));
         assertThat(stats.getInodeStats().getSharedTextInodes(), is(0));
-        assertThat(stats.getInodeStats().getUsedInodes(), is(0));
+        assertThat(stats.getInodeStats().getUsedInodes(), is(1));
         assertThat(stats.getInodeStats().getErrorInodes(), is(0));
-        assertThat(stats.getInodeStats().getFreeInodes(), is(expectedInodes));
-        assertThat(stats.getInodeStats().getTotalInodes(), is(expectedInodes));
-        assertThat(stats.getInodeStats().getExpectedInodes(), is(expectedInodes));
+        assertThat(stats.getInodeStats().getFreeInodes(), is(expectedFreeInodes));
+        assertThat(stats.getInodeStats().getTotalInodes(), is(expectedTotalInodes));
+        assertThat(stats.getInodeStats().getExpectedInodes(), is(expectedTotalInodes));
         assertThat(stats.getInodeStats().getFreeInodeListUsed(), is(0));
         assertThat(stats.getInodeStats().getFreeInodeListAvailable(), is(0));
 
@@ -119,7 +122,7 @@ public class CromixFileSystemTest {
         assertThat(stats.getBlockStats().getDuplicateBlocks(), is(0));
         assertThat(stats.getBlockStats().getFreeListBlocks(), is(expectedBlocks));
         assertThat(stats.getBlockStats().getFiles(), is(0));
-        assertThat(stats.getBlockStats().getDirectories(), is(0));
+        assertThat(stats.getBlockStats().getDirectories(), is(1));
         assertThat(stats.getBlockStats().getDevices(), is(0));
     }
 }

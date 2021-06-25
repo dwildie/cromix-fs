@@ -46,7 +46,7 @@ public class Inode {
     private int number;
     private int parent;
     private InodeType type;
-    private int[] permissions = new int[3];
+//    private int[] permissions = new int[3];
     private int owner;
     private int group;
     private int dirCount;
@@ -68,9 +68,9 @@ public class Inode {
         Inode inode = new Inode(0xFFFF & readWord(raw, INODE_NUMBER_OFFSET));
         inode.parent = 0xFFFF & readWord(raw, INODE_PARENT_OFFSET);
         inode.type = InodeType.from(0xFF & raw[INODE_TYPE_OFFSET]);
-        inode.permissions[0] =  0xFF & raw[INODE_P_OWN_OFFSET];
-        inode.permissions[1] =  0xFF & raw[INODE_P_GRP_OFFSET];
-        inode.permissions[2] =  0xFF & raw[INODE_P_OTH_OFFSET];
+//        inode.permissions[0] =  0xFF & raw[INODE_P_OWN_OFFSET];
+//        inode.permissions[1] =  0xFF & raw[INODE_P_GRP_OFFSET];
+//        inode.permissions[2] =  0xFF & raw[INODE_P_OTH_OFFSET];
         inode.owner = 0xFFFF & readWord(raw, INODE_OWNER_OFFSET);
         inode.group = 0xFFFF & readWord(raw, INODE_GROUP_OFFSET);
         if (inode.type == CHARACTER_DEVICE || inode.type == BLOCK_DEVICE) {
@@ -105,9 +105,9 @@ public class Inode {
         writeWord(number, data, offset + INODE_NUMBER_OFFSET);
         writeWord(parent, data, offset + INODE_PARENT_OFFSET);
         data[offset + INODE_TYPE_OFFSET] = (byte)type.to();
-        data[offset + INODE_P_OWN_OFFSET] = (byte)permissions[0];
-        data[offset + INODE_P_GRP_OFFSET] = (byte)permissions[1];
-        data[offset + INODE_P_OTH_OFFSET] = (byte)permissions[2];
+        data[offset + INODE_P_OWN_OFFSET] = (byte)userPermission;
+        data[offset + INODE_P_GRP_OFFSET] = (byte)groupPermission;
+        data[offset + INODE_P_OTH_OFFSET] = (byte)otherPermission;
         writeWord(owner, data, offset + INODE_OWNER_OFFSET);
         writeWord(group, data, offset + INODE_GROUP_OFFSET);
         if (type == CHARACTER_DEVICE || type == BLOCK_DEVICE) {
