@@ -1,0 +1,32 @@
+package au.wildie.m68k.cromixfs.fs;
+
+import lombok.Getter;
+
+@Getter
+public class BlockUsage {
+    private boolean file;
+    private boolean directory;
+    private boolean onFreeList;
+
+    public boolean isUsed() {
+        return file || directory;
+    }
+
+    public boolean isUnused() {
+        return !file && !directory && !onFreeList;
+    }
+
+    public boolean isDuplicate() {
+        return ((file ? 1 : 0) + (directory ? 1 : 0) + (onFreeList ? 1 : 0)) > 1;
+    }
+
+    public void setFile() {
+        file = true;
+    }
+
+    public void setDirectory() {
+        directory = true;
+    }
+
+    public void setOnFreeList() { onFreeList = true; }
+}
