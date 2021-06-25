@@ -36,8 +36,6 @@ public class CromixFileSystem implements FileSystem {
     private final FreeBlock freeBlockList;
     private final List<Inode> inodes;
 
-    private final Set<Integer> orphanedBlockNumbers = new HashSet<>();
-
     public static boolean isValid(DiskInterface disk) {
         try {
             SuperBlock superBlock = SuperBlock.from(disk.getSuperBlock());
@@ -67,7 +65,8 @@ public class CromixFileSystem implements FileSystem {
         if (freeBlock.getFreeBlockList()[0] == 0) {
             return null;
         }
-        FreeBlock next = FreeBlock.from(getBlock(freeBlock.getFreeBlockList()[0]));
+        int blockNumber = freeBlock.getFreeBlockList()[0];
+        FreeBlock next = FreeBlock.from(blockNumber, getBlock(blockNumber));
         next.setNext(readNextFreeBlock(next));
         return next;
     }
@@ -100,12 +99,11 @@ public class CromixFileSystem implements FileSystem {
         for (int i = 0; i < FREE_INODE_LIST_SIZE; i++) {
             getInode(superBlock.getFreeInodeList()[i]).ifPresent(inodeStats::countFreeList);
         }
-        inodeStats.print(out);
-
         CromixBlockStats blockStats = checkBlocks();
+
+        inodeStats.print(out);
         blockStats.print(out);
 
-        extract("/tmp/fred", out);
         return new CromixFileSystemStats(blockStats, inodeStats);
     }
 
@@ -176,15 +174,6 @@ public class CromixFileSystem implements FileSystem {
         });
 
         freeBlockList.visit(blockUsage::setOnFreeList);
-
-        List<BlockUsageItem> orphaned = blockUsage.getOrphanedBlocks();
-
-//        for (BlockUsage usage : orphaned) {
-//            byte[] data = getBlock(usage.getNumber());
-////            System.out.println(data.length);
-//        }
-
-        orphanedBlockNumbers.addAll(orphaned.stream().map(BlockUsageItem::getNumber).collect(Collectors.toList()));
 
         CromixBlockStats stats = new CromixBlockStats(superBlock);
         stats.setFileBlocks(blockUsage.getFileBlockCount());
@@ -356,9 +345,6 @@ public class CromixFileSystem implements FileSystem {
 
     protected byte[] getBlock(int blockNumber) {
         try {
-            if (orphanedBlockNumbers.contains(blockNumber)) {
-                System.out.println(blockNumber);
-            }
             return disk.getBlock(blockNumber);
         } catch (IOException e) {
             throw new BlockUnavailableException(blockNumber, e);

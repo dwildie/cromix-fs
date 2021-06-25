@@ -10,19 +10,23 @@ import lombok.Setter;
 @Getter
 @Setter
 public class FreeBlock {
+    private int blockNumber;
     private int freeBlockCount;
     private int[] freeBlockList = new int[FREE_BLOCK_LIST_SIZE];
     private FreeBlock next;
+    private boolean dirty = false;
 
     public static FreeBlock from(SuperBlock superBlock) {
         FreeBlock freeBlock = new FreeBlock();
+        freeBlock.blockNumber = 0;
         freeBlock.freeBlockCount = superBlock.getFreeBlockCount();
         freeBlock.freeBlockList = Arrays.copyOf(superBlock.getFreeBlockList(), superBlock.getFreeBlockList().length);
         return freeBlock;
     }
 
-    public static FreeBlock from(byte[] data) {
+    public static FreeBlock from(int blockNumber, byte[] data) {
         FreeBlock freeBlock = new FreeBlock();
+        freeBlock.blockNumber = blockNumber;
         freeBlock.freeBlockCount = readWord(data, 0);
         freeBlock.freeBlockList = new int[FREE_BLOCK_LIST_SIZE];
         for (int i = 0; i < FREE_BLOCK_LIST_SIZE; i++) {
