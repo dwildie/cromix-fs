@@ -33,8 +33,12 @@ public class Inode {
     public static final int INODE_DUMPED_OFFSET      = 0x2A;
     public static final int INODE_PTRS_OFFSET        = 0x30;
 
-
     public static final int INODE_BLOCKS = 20;
+
+    public static final int DIRECT_BLOCKS = 0x10;
+    public static final int INDIRECT_1_BLOCK = 0x10;
+    public static final int INDIRECT_2_BLOCK = 0x11;
+    public static final int INDIRECT_3_BLOCK = 0x12;
 
     private int number;
     private int parent;
@@ -88,7 +92,7 @@ public class Inode {
         return iNode;
     }
 
-    public int getBlock(int blockIndex) {
+    public int getBlockNumber(int blockIndex) {
         return blocks[blockIndex];
     }
 
@@ -108,6 +112,9 @@ public class Inode {
 
             case PIPE:
                 return "P";
+
+            case SHARED_TEXT:
+                return "S";
 
             default:
                 return "U";

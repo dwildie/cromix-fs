@@ -28,6 +28,6 @@ public class CromixFileSystemTest {
         CromixFileSystem fs = new CromixFileSystem(disk);
         assertThat(fs, notNullValue());
 
-        CromixInodeStats stats = fs.check(System.out);
+        CromixFileSystemStats stats = fs.check(System.out);
     }
 }

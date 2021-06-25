@@ -32,7 +32,11 @@ public class FreeBlock {
     }
 
     public int getTotalFreeBlockCount() {
-        return freeBlockCount + (next != null ? next.getTotalFreeBlockCount() : 0);
+        return freeBlockCount + (next != null ? next.getFreeBlockCount() : 0) - 1;
+    }
+
+    private int getFreeBlockCount() {
+        return freeBlockCount + (next != null ? next.getFreeBlockCount() : 0);
     }
 
     public void visit(FreeBlockVisitor visitor) {
