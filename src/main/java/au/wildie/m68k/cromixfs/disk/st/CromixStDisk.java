@@ -1,7 +1,7 @@
 package au.wildie.m68k.cromixfs.disk.st;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
-import au.wildie.m68k.cromixfs.fs.CromixFileSystem;
+import au.wildie.m68k.cromixfs.fs.cromix.CromixFileSystem;
 
 import java.io.*;
 
@@ -66,6 +66,11 @@ public class CromixStDisk implements DiskInterface {
     }
 
     @Override
+    public void setSuperBlock(byte[] data) {
+        // TODO
+    }
+
+    @Override
     public byte[] getBlock(int block) {
         int c = getCylinderForBlock(0, block);
         int h = getHeadForBlock(block);
@@ -73,13 +78,14 @@ public class CromixStDisk implements DiskInterface {
         return media[c][h][s];
     }
 
-    public void checkSupported() {
-        // yes
-    }
-
     @Override
     public void writeImage(File file, boolean interleaved) throws IOException {
         throw new IOException("Unimplemented operation");
+    }
+
+    @Override
+    public void persist(OutputStream archive) throws IOException {
+        // TODO
     }
 
     @Override

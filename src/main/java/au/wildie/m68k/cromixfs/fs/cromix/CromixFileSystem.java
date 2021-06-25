@@ -1,7 +1,10 @@
-package au.wildie.m68k.cromixfs.fs;
+package au.wildie.m68k.cromixfs.fs.cromix;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
 import au.wildie.m68k.cromixfs.disk.imd.ImageException;
+import au.wildie.m68k.cromixfs.fs.CromixTime;
+import au.wildie.m68k.cromixfs.fs.DumpMode;
+import au.wildie.m68k.cromixfs.fs.FileSystem;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
@@ -9,23 +12,18 @@ import java.io.*;
 import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static au.wildie.m68k.cromixfs.fs.DumpMode.EXTRACT;
 import static au.wildie.m68k.cromixfs.fs.DumpMode.LIST;
-import static au.wildie.m68k.cromixfs.fs.Inode.*;
-import static au.wildie.m68k.cromixfs.fs.InodeType.*;
-import static au.wildie.m68k.cromixfs.fs.PointerBlock.BLOCK_POINTER_COUNT;
-import static au.wildie.m68k.cromixfs.fs.SuperBlock.FREE_INODE_LIST_SIZE;
+import static au.wildie.m68k.cromixfs.fs.cromix.Inode.*;
+import static au.wildie.m68k.cromixfs.fs.cromix.InodeType.*;
+import static au.wildie.m68k.cromixfs.fs.cromix.PointerBlock.BLOCK_POINTER_COUNT;
+import static au.wildie.m68k.cromixfs.fs.cromix.SuperBlock.FREE_INODE_LIST_SIZE;
 import static au.wildie.m68k.cromixfs.utils.BinUtils.readDWord;
 import static au.wildie.m68k.cromixfs.utils.BinUtils.readWord;
 
 public class CromixFileSystem implements FileSystem {
-
-
     private static final int DIR_ENTRY_LENGTH = 0x20;
-
-
 
     // Always use forward slash as per cromix
     private static final String FILE_SEP = "/";
@@ -45,6 +43,26 @@ public class CromixFileSystem implements FileSystem {
         return false;
     }
 
+    public static CromixFileSystem initialise(DiskInterface disk) throws IOException {
+        SuperBlock superBlock = SuperBlock.initialise(disk.getFormatLabel());
+
+        // Create the inodes
+        for (int i = 0; i < superBlock.getInodeCount() / INODES_PER_BLOCK; i++) {
+            byte[] block = disk.getBlock(superBlock.getFirstInode() + i);
+            for (int j = 0; j < INODES_PER_BLOCK; j++) {
+                new Inode(i * INODES_PER_BLOCK + j + 1).toBytes(block, (superBlock.getBlockSize() / INODES_PER_BLOCK) * j);
+            }
+        }
+
+        // Create the free block list
+        FreeBlock freeBlock = FreeBlock.create(superBlock);
+        freeBlock.flush(disk);
+
+        disk.setSuperBlock(superBlock.toBytes());
+
+        return new CromixFileSystem(disk);
+    }
+
     public CromixFileSystem(DiskInterface disk) throws IOException {
         this.disk = disk;
         superBlock = SuperBlock.from(disk.getSuperBlock());
@@ -62,10 +80,10 @@ public class CromixFileSystem implements FileSystem {
     }
 
     protected FreeBlock readNextFreeBlock(FreeBlock freeBlock) {
-        if (freeBlock.getFreeBlockList()[0] == 0) {
+        if (freeBlock.getList()[0] == 0) {
             return null;
         }
-        int blockNumber = freeBlock.getFreeBlockList()[0];
+        int blockNumber = freeBlock.getList()[0];
         FreeBlock next = FreeBlock.from(blockNumber, getBlock(blockNumber));
         next.setNext(readNextFreeBlock(next));
         return next;
@@ -92,14 +110,14 @@ public class CromixFileSystem implements FileSystem {
     }
 
     protected CromixFileSystemStats check(PrintStream out) throws IOException {
-        CromixInodeStats inodeStats = new CromixInodeStats(superBlock);
+        InodeStats inodeStats = new InodeStats(superBlock);
 
         inodes.forEach(inodeStats::countUsage);
 
         for (int i = 0; i < FREE_INODE_LIST_SIZE; i++) {
             getInode(superBlock.getFreeInodeList()[i]).ifPresent(inodeStats::countFreeList);
         }
-        CromixBlockStats blockStats = checkBlocks();
+        BlockStats blockStats = checkBlocks();
 
         inodeStats.print(out);
         blockStats.print(out);
@@ -107,7 +125,7 @@ public class CromixFileSystem implements FileSystem {
         return new CromixFileSystemStats(blockStats, inodeStats);
     }
 
-    protected CromixBlockStats checkBlocks() {
+    protected BlockStats checkBlocks() {
         BlockUsage blockUsage = new BlockUsage(superBlock);
         AtomicInteger fileCount = new AtomicInteger();
         AtomicInteger directoryCount = new AtomicInteger();
@@ -175,7 +193,9 @@ public class CromixFileSystem implements FileSystem {
 
         freeBlockList.visit(blockUsage::setOnFreeList);
 
-        CromixBlockStats stats = new CromixBlockStats(superBlock);
+        blockUsage.getOrphanedBlocks().forEach(item -> System.out.printf("Orphaned block number %d\n", item.getNumber()));
+
+        BlockStats stats = new BlockStats(superBlock);
         stats.setFileBlocks(blockUsage.getFileBlockCount());
         stats.setDirectoryBlocks(blockUsage.getDirectoryBlockCount());
         stats.setOnFreeList(blockUsage.getOnFreeListBlockCount());
@@ -390,5 +410,9 @@ public class CromixFileSystem implements FileSystem {
              + ((value & 0x2) != 0 ? "e" : "-")
              + ((value & 0x4) != 0 ? "w" : "-")
              + ((value & 0x8) != 0 ? "a" : "-");
+    }
+
+    public void persist(OutputStream archive) throws IOException {
+        disk.persist(archive);
     }
 }

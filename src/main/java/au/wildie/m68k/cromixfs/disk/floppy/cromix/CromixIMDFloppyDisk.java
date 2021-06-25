@@ -5,14 +5,25 @@ import au.wildie.m68k.cromixfs.disk.floppy.IMDFloppyImage;
 import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
 import au.wildie.m68k.cromixfs.disk.imd.IMDSector;
 import au.wildie.m68k.cromixfs.disk.imd.IMDTrack;
+import au.wildie.m68k.cromixfs.ftar.FTarIMDDisk;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
+import java.util.Arrays;
 
 public class CromixIMDFloppyDisk extends IMDFloppyImage {
 
     private final CromixFloppyInfo info;
     private boolean uniform = false;
+
+    public static CromixIMDFloppyDisk create(String formatLabel, PrintStream out) {
+        IMDImage image = new IMDImage(new int[] {0, 3}, CromixFloppyInfo.LARGE_DOUBLE_DENSITY_DS);
+        IMDSector zero = image.getSector(0, 0, 1);
+        Arrays.fill(zero.getData(), (byte)0);
+        CromixFloppyInfo.setFormatLabel(formatLabel, zero.getData());
+
+        return new CromixIMDFloppyDisk(image, out);
+    }
 
     public CromixIMDFloppyDisk(IMDImage image, PrintStream out) {
         super(image, out);
@@ -42,28 +53,49 @@ public class CromixIMDFloppyDisk extends IMDFloppyImage {
         if (file.exists()) {
             file.delete();
         }
-
         try (OutputStream out = new FileOutputStream(file)) {
-            for (IMDTrack track : image.getTracks()) {
-                if (track.getCylinder() == 0 && track.getHead() == 0) {
-                    // Write track 0
-                    for (int i = 0; i < track.getSectorCount(); i++) {
-                        out.write(track.getSector(i + 1).getData());
-                    }
-                } else {
-                    for (int i = 0; i < track.getSectorCount(); i++) {
-                        int sectorNumber = interleaved ? i + 1 : info.getInterleave()[i] + 1;
-                        out.write(track.getSector(sectorNumber).getData());
-                    }
+            persist(out, interleaved);
+        }
+    }
+
+    @Override
+    public void persist(OutputStream archive) {
+        image.persist(archive);
+    }
+
+    public void persist(OutputStream archive, boolean interleaved) throws IOException {
+        for (IMDTrack track : image.getTracks()) {
+            if (track.getCylinder() == 0 && track.getHead() == 0) {
+                // Write track 0
+                for (int i = 0; i < track.getSectorCount(); i++) {
+                    archive.write(track.getSector(i + 1).getData());
+                }
+            } else {
+                for (int i = 0; i < track.getSectorCount(); i++) {
+                    int sectorNumber = interleaved ? i + 1 : info.getInterleave()[i] + 1;
+                    archive.write(track.getSector(sectorNumber).getData());
                 }
             }
-            out.flush();
         }
+        archive.flush();
     }
 
     @Override
     public byte[] getInterleave() {
         return info.getInterleave();
+    }
+
+    @Override
+    public void setSuperBlock(byte[] data) {
+        if (uniform) {
+            // super block is the second sector
+            IMDSector zero = image.getSector(0,0,2);
+            System.arraycopy(data, 0, zero.getData(), 0, zero.getData().length);
+        } else {
+            for (int i = 0; i < 4; i++) {
+                System.arraycopy(data, 128 * i, image.getSector(0, 0, 5 + i).getData(), 0, 128);
+            }
+        }
     }
 
     @Override

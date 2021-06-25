@@ -1,14 +1,14 @@
-package au.wildie.m68k.cromixfs.fs;
+package au.wildie.m68k.cromixfs.fs.cromix;
 
-import static au.wildie.m68k.cromixfs.fs.InodeType.UNUSED;
-import static au.wildie.m68k.cromixfs.fs.SuperBlock.FREE_INODE_LIST_SIZE;
+import static au.wildie.m68k.cromixfs.fs.cromix.InodeType.UNUSED;
+import static au.wildie.m68k.cromixfs.fs.cromix.SuperBlock.FREE_INODE_LIST_SIZE;
 import java.io.PrintStream;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class CromixInodeStats {
+public class InodeStats {
     private final int expectedInodes;
     private final int freeListSize;
 
@@ -22,7 +22,7 @@ public class CromixInodeStats {
     private int freeInodeListUsed;
     private int freeInodeListAvailable;
 
-    public CromixInodeStats(SuperBlock superBlock) {
+    public InodeStats(SuperBlock superBlock) {
         expectedInodes = superBlock.getInodeCount();
         freeListSize = FREE_INODE_LIST_SIZE;
     }
@@ -68,10 +68,10 @@ public class CromixInodeStats {
         out.printf("  Device:          %5d\n", deviceInodes);
         out.printf("  Pipe:            %5d\n", pipeInodes);
         out.printf("  Shared text:     %5d\n", sharedTextInodes);
-        out.printf("  Used:            %5d\n", usedInodes());
+        out.printf("  Used:            %5d\n", getUsedInodes());
         out.printf("  Error:           %5d\n", errorInodes);
         out.printf("  Free:            %5d\n", freeInodes);
-        out.printf("  Total:           %5d\n", totalInodes());
+        out.printf("  Total:           %5d\n", getTotalInodes());
         out.printf("  Expected:        %5d\n", expectedInodes);
         out.print("\nFree Inode list:\n");
         out.printf("  Used:            %5d\n", freeInodeListUsed);
@@ -80,11 +80,11 @@ public class CromixInodeStats {
         out.printf("  Expected:        %5d\n", freeListSize);
     }
 
-    protected int usedInodes() {
+    public int getUsedInodes() {
         return fileInodes + directoryInodes + deviceInodes + pipeInodes + sharedTextInodes;
     }
 
-    protected int totalInodes() {
+    public int getTotalInodes() {
         return freeInodes + fileInodes + directoryInodes + deviceInodes + pipeInodes + sharedTextInodes + errorInodes;
     }
 }

@@ -1,9 +1,10 @@
-package au.wildie.m68k.cromixfs.fs;
+package au.wildie.m68k.cromixfs.fs.cromix;
 
 
 public enum InodeType {
     UNUSED, FILE, DIRECTORY, CHARACTER_DEVICE, BLOCK_DEVICE, PIPE, SHARED_TEXT, UNKNOWN;
 
+    public static final int INODE_TYPE_UNUSED = 0x00;
     public static final int INODE_TYPE_FILE = 0x80;
     public static final int INODE_TYPE_DIR = 0x81;
     public static final int INODE_TYPE_CHAR = 0x82;
@@ -29,6 +30,27 @@ public enum InodeType {
                 return SHARED_TEXT;
             default:
                 return UNKNOWN;
+        }
+    }
+
+    public int to() {
+        switch (this) {
+            case UNUSED:
+                return INODE_TYPE_UNUSED;
+            case FILE:
+                return INODE_TYPE_FILE;
+            case DIRECTORY:
+                return INODE_TYPE_DIR;
+            case CHARACTER_DEVICE:
+                return INODE_TYPE_CHAR;
+            case BLOCK_DEVICE:
+                return INODE_TYPE_BLOCK;
+            case PIPE:
+                return INODE_TYPE_PIPE;
+            case SHARED_TEXT:
+                return INODE_TYPE_SHARED_TEXT;
+            default:
+                return 0;
         }
     }
 }

@@ -1,12 +1,27 @@
 package au.wildie.m68k.cromixfs.utils;
 
 public class BinUtils {
+    public static final int WORD_SIZE = 2;
+    public static final int DWORD_SIZE = 4;
+
     public static int readDWord(byte[] data, int offset) {
         return (((((0xFF & data[offset]) << 8) + (0xFF & data[offset + 1]) << 8) + (0xFF & data[offset + 2])) << 8) + (0xFF & data[offset + 3]);
     }
 
     public static int readWord(byte[] data, int offset) {
         return ((0xFF & data[offset]) << 8) + (0xFF & data[offset + 1]);
+    }
+
+    public static void writeDWord(int word, byte[] data, int offset) {
+        data[offset]     = (byte)(0xFF & (word >> 24));
+        data[offset + 1] = (byte)(0xFF & (word >> 16));
+        data[offset + 2] = (byte)(0xFF & (word >> 8));
+        data[offset + 3] = (byte)(word & 0xFF);
+    }
+
+    public static void writeWord(int word, byte[] data, int offset) {
+        data[offset]     = (byte)(0xFF & (word >> 8));
+        data[offset + 1] = (byte)(word & 0xFF);
     }
 
     public static String readString(byte[] data, int offset) {

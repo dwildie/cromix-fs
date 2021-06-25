@@ -6,6 +6,7 @@ import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskSize.LARGE;
 import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskSize.SMALL;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import au.wildie.m68k.cromixfs.disk.floppy.IMDFloppyException;
 import au.wildie.m68k.cromixfs.disk.floppy.VFDFloppyImage;
@@ -56,6 +57,11 @@ public class CromixVFDFloppyDisk extends VFDFloppyImage {
     }
 
     @Override
+    public void setSuperBlock(byte[] data) {
+        // TODO
+    }
+
+    @Override
     public byte[] getBlock(int blockNumber) throws IOException {
         int c = getCylinderForBlock(blockNumber);
         int h = getHeadForBlock(blockNumber);
@@ -64,6 +70,11 @@ public class CromixVFDFloppyDisk extends VFDFloppyImage {
         int is = info.getInterleave()[0xFF & s] + 1;
 
         return image.read(c, h, is);
+    }
+
+    @Override
+    public void persist(OutputStream archive) {
+        // TODO
     }
 
     private int getCylinderForBlock(int block) {

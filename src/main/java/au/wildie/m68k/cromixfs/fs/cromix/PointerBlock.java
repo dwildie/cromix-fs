@@ -1,4 +1,4 @@
-package au.wildie.m68k.cromixfs.fs;
+package au.wildie.m68k.cromixfs.fs.cromix;
 
 import static au.wildie.m68k.cromixfs.utils.BinUtils.readDWord;
 import java.util.Arrays;

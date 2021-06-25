@@ -7,6 +7,8 @@ import lombok.Setter;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Date;
 
 @Getter
@@ -34,6 +36,8 @@ public class CromixTime {
     private final static byte[] tab2 = { 1, 2, 4, 5, 7, 8, 9,11,12,14,15,16};
 
     private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    private static final CromixTime epoch = new CromixTime((byte)60,(byte)03,(byte)0,(byte)0,(byte)0,(byte)0);
 
     private final static String[] MONTHS =
             {"", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -102,6 +106,13 @@ public class CromixTime {
         ct.setYear((byte) (t + 60));
 
         return ct;
+    }
+
+    public static CromixTime now() {
+        long mtime = Instant.now().getEpochSecond()
+                + 8 * 3600
+                + ZoneId.systemDefault().getRules().getOffset(Instant.now()).getTotalSeconds();
+        return from(mtime + epoch.utime());
     }
 
     public static CromixTime from(byte[] raw) {

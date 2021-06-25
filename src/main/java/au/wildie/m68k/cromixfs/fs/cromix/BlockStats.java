@@ -1,4 +1,4 @@
-package au.wildie.m68k.cromixfs.fs;
+package au.wildie.m68k.cromixfs.fs.cromix;
 
 import java.io.PrintStream;
 import lombok.Getter;
@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CromixBlockStats {
+public class BlockStats {
     private int fileBlocks;
     private int directoryBlocks;
     private int orphanedBlock;
@@ -18,7 +18,7 @@ public class CromixBlockStats {
     private int devices;
     private int directories;
 
-    public CromixBlockStats(SuperBlock superBlock) {
+    public BlockStats(SuperBlock superBlock) {
         availableBlocks = superBlock.getDataBlockCount();
     }
 
@@ -28,7 +28,7 @@ public class CromixBlockStats {
         out.printf("  File:            %5d\n", fileBlocks);
         out.printf("  On free list:    %5d\n", onFreeList);
         out.printf("  Orphaned:        %5d\n", orphanedBlock);
-        out.printf("  Total:           %5d\n", directoryBlocks + fileBlocks + onFreeList + orphanedBlock);
+        out.printf("  Total:           %5d\n", getTotalBlocks());
         out.printf("  Available:       %5d\n", availableBlocks);
         out.printf("  Duplicate:       %5d\n", duplicateBlocks);
 
@@ -40,5 +40,9 @@ public class CromixBlockStats {
         out.printf("Directories:       %5d\n", directories);
         out.printf("Devices:           %5d\n", devices);
         out.print("\n");
+    }
+
+    public int getTotalBlocks() {
+        return directoryBlocks + fileBlocks + onFreeList + orphanedBlock;
     }
 }
