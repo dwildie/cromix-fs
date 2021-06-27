@@ -67,11 +67,10 @@ public class CromixFileSystemTest {
         CromixFileSystemStats stats = fs.check(System.out);
         assertThat(stats, notNullValue());
 
-        int expectedFreeInodes = 507;
-        int expectedTotalInodes = 508;
-        int expectedBlocks = 2307;
+        CromixFileSystemStats expectedStats = new CromixFileSystemStats(new BlockStats(2307), new InodeStats(508));
+        expectedStats.getInodeStats().setFileInodes(507);
 
-        assertStats(stats, expectedFreeInodes, expectedTotalInodes, expectedBlocks);
+        assertStats(stats, expectedStats);
 
         File file = new File("/tmp/created.imd");
         if (file.exists()) {
@@ -95,34 +94,131 @@ public class CromixFileSystemTest {
             stats = fs.check(System.out);
             assertThat(stats, notNullValue());
 
-            assertStats(stats, expectedFreeInodes, expectedTotalInodes, expectedBlocks);
+            assertStats(stats, expectedStats);
         }
     }
 
-    private void assertStats(CromixFileSystemStats stats, int expectedFreeInodes, int expectedTotalInodes, int expectedBlocks) {
-        assertThat(stats.getInodeStats().getDirectoryInodes(), is(1));
-        assertThat(stats.getInodeStats().getFileInodes(), is(0));
-        assertThat(stats.getInodeStats().getDeviceInodes(), is(0));
-        assertThat(stats.getInodeStats().getPipeInodes(), is(0));
-        assertThat(stats.getInodeStats().getSharedTextInodes(), is(0));
-        assertThat(stats.getInodeStats().getUsedInodes(), is(1));
-        assertThat(stats.getInodeStats().getErrorInodes(), is(0));
-        assertThat(stats.getInodeStats().getFreeInodes(), is(expectedFreeInodes));
-        assertThat(stats.getInodeStats().getTotalInodes(), is(expectedTotalInodes));
-        assertThat(stats.getInodeStats().getExpectedInodes(), is(expectedTotalInodes));
-        assertThat(stats.getInodeStats().getFreeInodeListUsed(), is(0));
-        assertThat(stats.getInodeStats().getFreeInodeListAvailable(), is(0));
+    @Test
+    public void list() throws IOException {
+        File added = new File("/tmp/added.imd");
+//        File added = new File("/tmp/blank.imd");
 
-        assertThat(stats.getBlockStats().getDirectoryBlocks(), is(0));
-        assertThat(stats.getBlockStats().getFileBlocks(), is(0));
-        assertThat(stats.getBlockStats().getOnFreeList(), is(expectedBlocks));
-        assertThat(stats.getBlockStats().getOrphanedBlock(), is(0));
-        assertThat(stats.getBlockStats().getTotalBlocks(), is(expectedBlocks));
-        assertThat(stats.getBlockStats().getAvailableBlocks(), is(expectedBlocks));
-        assertThat(stats.getBlockStats().getDuplicateBlocks(), is(0));
-        assertThat(stats.getBlockStats().getFreeListBlocks(), is(expectedBlocks));
-        assertThat(stats.getBlockStats().getFiles(), is(0));
-        assertThat(stats.getBlockStats().getDirectories(), is(1));
-        assertThat(stats.getBlockStats().getDevices(), is(0));
+        try (FileInputStream src = new FileInputStream(added)) {
+            IMDImage image = IMDImage.fromStream(src, System.out);
+            assertThat(image, notNullValue());
+
+            DiskInterface disk = new CromixIMDFloppyDisk(image, System.out);
+            assertThat(disk, notNullValue());
+            assertThat(CromixFileSystem.isValid(disk), is(true));
+
+            CromixFileSystem fs = new CromixFileSystem(disk);
+            assertThat(fs, notNullValue());
+
+            fs.check(System.out);
+            fs.list(System.out);
+       }
+    }
+
+    @Test
+    public void addDirectory() throws IOException {
+
+        DiskInterface disk = CromixIMDFloppyDisk.create("CLDSDD", System.out);
+        assertThat(disk, notNullValue());
+
+        CromixFileSystem fs = CromixFileSystem.initialise(disk);
+        assertThat(fs, notNullValue());
+        assertThat(CromixFileSystem.isValid(disk), is(true));
+
+        CromixFileSystemStats stats = fs.check(System.out);
+        assertThat(stats, notNullValue());
+
+        CromixFileSystemStats expectedStats = new CromixFileSystemStats(new BlockStats(2307), new InodeStats(508));
+        expectedStats.getInodeStats().setDirectoryInodes(1);
+        expectedStats.getInodeStats().setFreeInodes(507);
+        expectedStats.getBlockStats().setOnFreeList(2306);
+        expectedStats.getBlockStats().setDirectoryBlocks(1);
+        expectedStats.getBlockStats().setFreeListBlocks(2306);
+        expectedStats.getBlockStats().setDirectories(1);
+
+        assertStats(stats, expectedStats);
+
+        File file = new File("/tmp/blank");
+        assertThat(file, notNullValue());
+        assertThat(file.exists(), is(true));
+        assertThat(file.isDirectory(), is(true));
+        fs.addDirectory(file);
+
+        fs.list(System.out);
+
+        stats = fs.check(System.out);
+        //assertThat(stats, notNullValue());
+
+        expectedStats.getInodeStats().setDirectoryInodes(5);
+        expectedStats.getInodeStats().setFileInodes(1);
+        expectedStats.getInodeStats().setFreeInodes(502);
+        expectedStats.getInodeStats().setFreeInodeListUsed(5);
+        expectedStats.getInodeStats().setFreeInodeListAvailable(75);
+        expectedStats.getBlockStats().setDirectoryBlocks(2);
+        expectedStats.getBlockStats().setFileBlocks(1);
+        expectedStats.getBlockStats().setOnFreeList(2304);
+        expectedStats.getBlockStats().setFreeListBlocks(2304);
+        expectedStats.getBlockStats().setDirectories(5);
+        expectedStats.getBlockStats().setFiles(1);
+
+//        assertStats(stats, expectedStats);
+
+        File added = new File("/tmp/added.imd");
+        if (added.exists()) {
+            added.delete();
+        }
+        try (FileOutputStream archive = new FileOutputStream(added)) {
+            fs.persist(archive);
+        }
+
+        try (FileInputStream src = new FileInputStream(added)) {
+            IMDImage image = IMDImage.fromStream(src, System.out);
+            assertThat(image, notNullValue());
+
+            disk = new CromixIMDFloppyDisk(image, System.out);
+            assertThat(disk, notNullValue());
+            assertThat(CromixFileSystem.isValid(disk), is(true));
+
+            fs = new CromixFileSystem(disk);
+            assertThat(fs, notNullValue());
+
+            stats = fs.check(System.out);
+            assertThat(stats, notNullValue());
+
+            fs.list(System.out);
+
+            assertStats(stats, expectedStats);
+        }
+    }
+
+    private void assertStats(CromixFileSystemStats stats, CromixFileSystemStats expectedStats) {
+        assertThat(stats.getInodeStats().getDirectoryInodes(), is(expectedStats.getInodeStats().getDirectoryInodes()));
+        assertThat(stats.getInodeStats().getFileInodes(), is(expectedStats.getInodeStats().getFileInodes()));
+        assertThat(stats.getInodeStats().getDeviceInodes(), is(expectedStats.getInodeStats().getDeviceInodes()));
+        assertThat(stats.getInodeStats().getPipeInodes(), is(expectedStats.getInodeStats().getPipeInodes()));
+        assertThat(stats.getInodeStats().getSharedTextInodes(), is(expectedStats.getInodeStats().getSharedTextInodes()));
+        assertThat(stats.getInodeStats().getUsedInodes(), is(expectedStats.getInodeStats().getUsedInodes()));
+        assertThat(stats.getInodeStats().getErrorInodes(), is(expectedStats.getInodeStats().getErrorInodes()));
+        assertThat(stats.getInodeStats().getFreeInodes(), is(expectedStats.getInodeStats().getFreeInodes()));
+        assertThat(stats.getInodeStats().getTotalInodes(), is(expectedStats.getInodeStats().getTotalInodes()));
+        assertThat(stats.getInodeStats().getExpectedInodes(), is(expectedStats.getInodeStats().getExpectedInodes()));
+        assertThat(stats.getInodeStats().getFreeInodeListUsed(), is(expectedStats.getInodeStats().getFreeInodeListUsed()));
+        assertThat(stats.getInodeStats().getFreeInodeListAvailable(), is(expectedStats.getInodeStats().getFreeInodeListAvailable()));
+
+        assertThat(stats.getBlockStats().getDirectoryBlocks(), is(expectedStats.getBlockStats().getDirectoryBlocks()));
+        assertThat(stats.getBlockStats().getFileBlocks(), is(expectedStats.getBlockStats().getFileBlocks()));
+        assertThat(stats.getBlockStats().getOnFreeList(), is(expectedStats.getBlockStats().getOnFreeList()));
+        assertThat(stats.getBlockStats().getOrphanedBlocks(), is(expectedStats.getBlockStats().getOrphanedBlocks()));
+        assertThat(stats.getBlockStats().getTotalBlocks(), is(expectedStats.getBlockStats().getTotalBlocks()));
+        assertThat(stats.getBlockStats().getAvailableBlocks(), is(expectedStats.getBlockStats().getAvailableBlocks()));
+        assertThat(stats.getBlockStats().getDuplicateBlocks(), is(expectedStats.getBlockStats().getDuplicateBlocks()));
+        assertThat(stats.getBlockStats().getFreeListBlocks(), is(expectedStats.getBlockStats().getFreeListBlocks()));
+        assertThat(stats.getBlockStats().getFiles(), is(expectedStats.getBlockStats().getFiles()));
+        assertThat(stats.getBlockStats().getDirectories(), is(expectedStats.getBlockStats().getDirectories()));
+        assertThat(stats.getBlockStats().getDevices(), is(expectedStats.getBlockStats().getDevices()));
     }
 }

@@ -32,6 +32,14 @@ public class BinUtils {
         return str.toString();
     }
 
+    public static String readString(byte[] data, int offset, int maxLength) {
+        StringBuilder str = new StringBuilder();
+        for (int i = 0; data[offset + i] != 0 && i < maxLength; i++) {
+            str.append((char) data[offset + i]);
+        }
+        return str.toString();
+    }
+
     public static void writeString(String str, byte[] data, int offset, int max) {
         for (int i = 0; i < str.length(); i++) {
             if (i < (max - 1)) {

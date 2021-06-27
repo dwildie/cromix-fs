@@ -59,7 +59,7 @@ public class CromixHFEFloppyDisk extends HFEFloppyImage {
     }
 
     @Override
-    public void setSuperBlock(byte[] data) {
+    public void flushSuperBlock(byte[] data) {
         // TODO maybe
     }
 

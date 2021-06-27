@@ -86,7 +86,7 @@ public class CromixIMDFloppyDisk extends IMDFloppyImage {
     }
 
     @Override
-    public void setSuperBlock(byte[] data) {
+    public void flushSuperBlock(byte[] data) {
         if (uniform) {
             // super block is the second sector
             IMDSector zero = image.getSector(0,0,2);

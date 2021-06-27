@@ -23,7 +23,11 @@ public class InodeStats {
     private int freeInodeListAvailable;
 
     public InodeStats(SuperBlock superBlock) {
-        expectedInodes = superBlock.getInodeCount();
+        this(superBlock.getInodeCount());
+    }
+
+    public InodeStats(int expectedInodes) {
+        this.expectedInodes = expectedInodes;
         freeListSize = FREE_INODE_LIST_SIZE;
     }
 

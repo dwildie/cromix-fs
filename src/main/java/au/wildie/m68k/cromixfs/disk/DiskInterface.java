@@ -6,7 +6,7 @@ import java.io.OutputStream;
 
 public interface DiskInterface extends DiskInfo {
     byte[] getSuperBlock() throws IOException;
-    void setSuperBlock(byte[] data);
+    void flushSuperBlock(byte[] data);
     byte[] getBlock(int blockNumber) throws IOException;
     void writeImage(File file, boolean interleaved) throws IOException;
 

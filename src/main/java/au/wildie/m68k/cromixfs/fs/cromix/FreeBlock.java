@@ -1,15 +1,14 @@
 package au.wildie.m68k.cromixfs.fs.cromix;
 
-import static au.wildie.m68k.cromixfs.fs.cromix.SuperBlock.FREE_BLOCK_LIST_SIZE;
-import static au.wildie.m68k.cromixfs.utils.BinUtils.*;
-import static java.lang.Integer.min;
+import au.wildie.m68k.cromixfs.disk.DiskInterface;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.util.Arrays;
 
-import au.wildie.m68k.cromixfs.disk.DiskInterface;
-import lombok.Getter;
-import lombok.Setter;
+import static au.wildie.m68k.cromixfs.fs.cromix.SuperBlock.FREE_BLOCK_LIST_SIZE;
+import static au.wildie.m68k.cromixfs.utils.BinUtils.*;
 
 @Getter
 @Setter
@@ -19,17 +18,6 @@ public class FreeBlock {
     private int[] list = new int[FREE_BLOCK_LIST_SIZE];
     private FreeBlock next = null;
     private boolean dirty = false;
-
-    public static FreeBlock create(SuperBlock superBlock) {
-        FreeBlock freeBlock = create(0, superBlock);
-        // Update super block
-        superBlock.setFreeBlockCount(freeBlock.getCount());
-        for (int i = 0; i < FREE_BLOCK_LIST_SIZE; i++) {
-            superBlock.getFreeBlockList()[i] = freeBlock.list[i];
-        }
-        superBlock.setDirty(true);
-        return freeBlock;
-    }
 
     protected static FreeBlock create(int blockIndex, SuperBlock superBlock) {
         FreeBlock freeBlock = new FreeBlock();
@@ -67,11 +55,12 @@ public class FreeBlock {
     }
 
 
-    public static FreeBlock from(SuperBlock superBlock) {
+    public static FreeBlock from(SuperBlock superBlock, DiskInterface disk) {
         FreeBlock freeBlock = new FreeBlock();
         freeBlock.blockNumber = 0;
         freeBlock.count = superBlock.getFreeBlockCount();
         freeBlock.list = Arrays.copyOf(superBlock.getFreeBlockList(), superBlock.getFreeBlockList().length);
+        freeBlock.readNextFreeBlock(disk);
         return freeBlock;
     }
 
@@ -86,8 +75,30 @@ public class FreeBlock {
         return freeBlock;
     }
 
-    public void flush(DiskInterface disk) throws IOException {
-        if (blockNumber != 0) {
+    protected void readNextFreeBlock(DiskInterface disk) {
+        try {
+            if (getList()[0] != 0) {
+                int blockNumber = getList()[0];
+                next = FreeBlock.from(blockNumber, disk.getBlock(blockNumber));
+                next.readNextFreeBlock(disk);
+            }
+        } catch (IOException e) {
+            throw new BlockUnavailableException(blockNumber, e);
+        }
+    }
+
+    public void flush(SuperBlock superBlock) {
+        if (blockNumber == 0) {
+            superBlock.setFreeBlockCount(count);
+            System.arraycopy(list, 0, superBlock.getFreeBlockList(), 0, FREE_BLOCK_LIST_SIZE);
+        }
+    }
+
+    public void flush(SuperBlock superBlock, DiskInterface disk) throws IOException {
+        if (blockNumber == 0) {
+            superBlock.setFreeBlockCount(count);
+            System.arraycopy(list, 0, superBlock.getFreeBlockList(), 0, FREE_BLOCK_LIST_SIZE);
+        } else {
             byte[] data = disk.getBlock(blockNumber);
             writeWord(count, data, 0);
             for (int i = 0; i < FREE_BLOCK_LIST_SIZE; i++) {
@@ -95,16 +106,35 @@ public class FreeBlock {
             }
         }
         if (next != null) {
-            next.flush(disk);
+            next.flush(superBlock, disk);
         }
     }
 
-    public int getTotalFreeBlockCount() {
-        return count + (next != null ? next.getFreeBlockCount() : 0) - 1;
+    public int getFreeBlockCount() {
+        return count + (next != null ? next.getFreeBlockCount() : 0);
     }
 
-    private int getFreeBlockCount() {
-        return count + (next != null ? next.getFreeBlockCount() : 0);
+    public int getFreeBlockNumber(int index) {
+        return list[index];
+    }
+
+    public int takeNextFreeBlockNumber() {
+        if (count == 1) {
+            if (list[0] == 0) {
+                throw new FreeBlockListException("No more blocks");
+            }
+
+            int blockNumber = next.getBlockNumber();
+            count = next.getCount();
+            System.arraycopy(next.list, 0, list, 0, list.length);
+            next = next.next;
+            return blockNumber;
+        }
+
+        int blockNumber = list[count - 1];
+        list[count - 1] = 0;
+        count--;
+        return blockNumber;
     }
 
     public void visit(FreeBlockNumberVisitor visitor) {

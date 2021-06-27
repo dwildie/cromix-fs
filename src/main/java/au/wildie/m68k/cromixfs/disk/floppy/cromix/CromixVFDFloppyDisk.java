@@ -57,7 +57,7 @@ public class CromixVFDFloppyDisk extends VFDFloppyImage {
     }
 
     @Override
-    public void setSuperBlock(byte[] data) {
+    public void flushSuperBlock(byte[] data) {
         // TODO
     }
 

@@ -1,5 +1,6 @@
 package au.wildie.m68k.cromixfs.fs.cromix;
 
+import au.wildie.m68k.cromixfs.disk.DiskInterface;
 import au.wildie.m68k.cromixfs.fs.CromixTime;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,7 +32,7 @@ public class SuperBlock {
     private int versionMinor;
     private int versionMajor;
     private String cromix;
-    private int firstInode;
+    private int firstInodeBlock;
     private int inodeCount;
     private CromixTime lastModified;
     private int blockCount;
@@ -48,10 +49,10 @@ public class SuperBlock {
 
     public static SuperBlock initialise (String label) {
         SuperBlock superBlock = new SuperBlock();
-        superBlock.setVersionMajor(0x31);
-        superBlock.setVersionMinor(0x68);
+        superBlock.setVersionMajor(0x41);
+        superBlock.setVersionMinor(0x61);
         superBlock.setCromix("cromix");
-        superBlock.setFirstInode(20);
+        superBlock.setFirstInodeBlock(20);
         superBlock.setInodeCount(508);
         superBlock.setBlockCount(2454);
         superBlock.setLastModified(CromixTime.now());
@@ -61,7 +62,7 @@ public class SuperBlock {
         superBlock.setFreeInodeCount(0);
         superBlock.setFreeInodeList(new int[FREE_INODE_LIST_SIZE]);
 
-        superBlock.firstDataBlock = (superBlock.inodeCount + INODES_PER_BLOCK - 1) / INODES_PER_BLOCK + superBlock.firstInode;
+        superBlock.firstDataBlock = (superBlock.inodeCount + INODES_PER_BLOCK - 1) / INODES_PER_BLOCK + superBlock.firstInodeBlock;
         superBlock.dataBlockCount = superBlock.blockCount - superBlock.firstDataBlock;
 
         superBlock.dirty = true;
@@ -74,7 +75,7 @@ public class SuperBlock {
         superBlock.versionMajor = data[SUPER_VERSION_OFFSET];
         superBlock.versionMinor = data[SUPER_VERSION_OFFSET + 1];
         superBlock.cromix = readString(data, SUPER_CROMIX_OFFSET);
-        superBlock.firstInode = readWord(data, SUPER_INODE_FIRST_OFFSET);
+        superBlock.firstInodeBlock = readWord(data, SUPER_INODE_FIRST_OFFSET);
         superBlock.inodeCount = readWord(data, SUPER_INODE_COUNT_OFFSET);
         superBlock.blockCount = readDWord(data, SUPER_BLOCK_COUNT_OFFSET);
         superBlock.lastModified = CromixTime.from(Arrays.copyOfRange(data, SUPER_LAST_MODIFIED_OFFSET, SUPER_LAST_MODIFIED_OFFSET + TIME_SIZE));
@@ -90,19 +91,25 @@ public class SuperBlock {
             superBlock.freeInodeList[i] = 0xFFFF & readWord(data, SUPER_FREE_INODE_LIST_OFFSET + i * WORD_SIZE);
         }
 
-        superBlock.firstDataBlock = (superBlock.inodeCount + INODES_PER_BLOCK - 1) / INODES_PER_BLOCK + superBlock.firstInode;
+        superBlock.firstDataBlock = (superBlock.inodeCount + INODES_PER_BLOCK - 1) / INODES_PER_BLOCK + superBlock.firstInodeBlock;
         superBlock.dataBlockCount = superBlock.blockCount - superBlock.firstDataBlock;
 
         return superBlock;
     }
 
-    public byte[] toBytes() {
-        byte[] data = new byte[512];
+    public void flush(DiskInterface disk) {
+        disk.flushSuperBlock(toBytes(new byte[512]));
+    }
 
+    public byte[] toBytes() {
+        return toBytes(new byte[512]);
+    }
+
+    public byte[] toBytes(byte[] data) {
         data[SUPER_VERSION_OFFSET] = (byte)versionMajor;
         data[SUPER_VERSION_OFFSET + 1] = (byte)versionMinor;
         writeString(cromix, data, SUPER_CROMIX_OFFSET);
-        writeWord(firstInode, data, SUPER_INODE_FIRST_OFFSET);
+        writeWord(firstInodeBlock, data, SUPER_INODE_FIRST_OFFSET);
         writeWord(inodeCount, data, SUPER_INODE_COUNT_OFFSET);
         writeDWord(blockCount, data, SUPER_BLOCK_COUNT_OFFSET);
         System.arraycopy(lastModified.toBytes(), 0, data, SUPER_LAST_MODIFIED_OFFSET, TIME_SIZE);
@@ -119,7 +126,17 @@ public class SuperBlock {
         return data;
     }
 
+    public void incrementFreeInodeCount() {
+        freeInodeCount++;
+    }
+
+    public void decrementFreeInodeCount() {
+        freeInodeCount--;
+    }
+
     public String getVersion() {
         return String.format("%02x%02x", versionMajor, versionMinor);
     }
+
+
 }
