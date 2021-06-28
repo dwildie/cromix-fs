@@ -7,6 +7,8 @@ import au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskSize;
 import au.wildie.m68k.cromixfs.disk.imd.IMDImage;
 import au.wildie.m68k.cromixfs.disk.imd.IMDSector;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 
 import static au.wildie.m68k.cromixfs.disk.floppy.cromix.DiskDensity.DOUBLE;
@@ -35,6 +37,11 @@ public class CDOSFloppyDisk extends IMDFloppyImage {
     }
 
     @Override
+    public void flushSuperBlock(byte[] data) {
+        // TODO
+    }
+
+    @Override
     public byte[] getBlock(int blockNumber) {
         int sectorNumber = info.getFileArea()[0] * info.getSectorsPerTrack() * 2 + info.getFileArea()[1] * info.getSectorsPerTrack() + blockNumber;
 
@@ -46,6 +53,11 @@ public class CDOSFloppyDisk extends IMDFloppyImage {
 
         IMDSector sector = image.getSector(c,h,is);
         return sector.getData();
+    }
+
+    @Override
+    public void persist(OutputStream archive) throws IOException {
+        // TODO
     }
 
     private int getCylinderForSectorNumber(int sectorNumber) {

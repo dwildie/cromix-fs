@@ -1,6 +1,7 @@
 package au.wildie.m68k.cromixfs.fs;
 
 import au.wildie.m68k.cromixfs.CromemcoTest;
+import au.wildie.m68k.cromixfs.fs.cromix.CromixFileSystem;
 import au.wildie.m68k.cromixfs.ftar.CromixFtar;
 import org.junit.Test;
 

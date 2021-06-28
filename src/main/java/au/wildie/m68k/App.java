@@ -1,12 +1,15 @@
 package au.wildie.m68k;
 
+import au.wildie.m68k.cromixfs.disk.DiskInterface;
 import au.wildie.m68k.cromixfs.disk.floppy.FileScan;
+import au.wildie.m68k.cromixfs.disk.floppy.cromix.CromixIMDFloppyDisk;
 import au.wildie.m68k.cromixfs.disk.st.STDiskException;
 import au.wildie.m68k.cromixfs.disk.vfd.InvalidVFDImageException;
 import au.wildie.m68k.cromixfs.disk.vfd.VFDConverter;
 import au.wildie.m68k.cromixfs.disk.vfd.VFDErrorsException;
 import au.wildie.m68k.cromixfs.fs.FileSystemOps;
 import au.wildie.m68k.cromixfs.fs.FileSystems;
+import au.wildie.m68k.cromixfs.fs.cromix.CromixFileSystem;
 import au.wildie.m68k.cromixfs.ftar.CromixFtar;
 import org.apache.commons.io.FilenameUtils;
 
@@ -40,7 +43,7 @@ public class App
             }
             get(args[1]).extract(args[2], System.out);
             return;
-        } else if (args.length == 3 && args[0].equalsIgnoreCase("-c")) {
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("-f")) {
             if (!new File(args[2]).exists()) {
                 System.out.printf("Source path %s does not exist\n", args[1]);
                 return;
@@ -55,6 +58,25 @@ public class App
             }
             try (FileOutputStream archive = new FileOutputStream(file)) {
                 ftar.create(args[2], archive, System.out);
+            }
+            return;
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("-m")) {
+            if (!new File(args[2]).exists()) {
+                System.out.printf("Source path %s does not exist\n", args[1]);
+                return;
+            }
+            CromixFileSystem fs = CromixFileSystem.initialise(CromixIMDFloppyDisk.create("CLDSDD", System.out));
+            File file = new File(args[1]);
+            if (file.exists()) {
+                file.delete();
+            }
+            if (file.getParentFile() != null && !file.getParentFile().exists()) {
+                file.getParentFile().mkdirs();
+            }
+            fs.addDirectory(new File(args[2]));
+
+            try (FileOutputStream archive = new FileOutputStream(file)) {
+                fs.persist(archive);
             }
             return;
         } else if (args.length == 2 && args[0].equalsIgnoreCase("-s")) {
@@ -94,10 +116,22 @@ public class App
     }
 
     private static void showUsage() {
-        System.out.println("java -jar archive.jar -l file.imd | file.hfe");
-        System.out.println("java -jar archive.jar -x file.imd | file.hfe path");
-        System.out.println("java -jar archive.jar -c file.imd path");
-//        System.out.println("java -jar archive.jar -v file.imd | file.hfe path");
-        System.out.println("java -jar archive.jar -s path");
+        System.out.println();
+        System.out.println("List files in an image:");
+        System.out.println("  java -jar archive.jar -l file.imd | file.hfe\n");
+
+        System.out.println("Extract files from an image to path:");
+        System.out.println("  java -jar archive.jar -x file.imd | file.hfe path\n");
+
+        System.out.println("Create a Cromix ftar image containing files from path:");
+        System.out.println("  java -jar archive.jar -f file.imd path\n");
+
+        System.out.println("Create a mountable Cromix image containing files from path:");
+        System.out.println("  java -jar archive.jar -m file.imd path\n");
+
+        //        System.out.println("java -jar archive.jar -v file.imd | file.hfe path");
+
+        System.out.println("Scan path and display image information:");
+        System.out.println("  java -jar archive.jar -s path\n");
     }
 }

@@ -7,6 +7,8 @@ import lombok.Setter;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Date;
 
 @Getter
@@ -14,6 +16,15 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CromixTime {
+    public static final int TIME_SIZE = 6;
+    private static final int YEAR = 0;
+    private static final int MONTH = 1;
+    private static final int DAY = 2;
+    private static final int HOUR = 3;
+    private static final int MINUTE = 4;
+    private static final int SECOND = 5;
+
+
     private byte year;           // year 0 .. 99
     private byte month;          // month 1 .. 12
     private byte day;            // day 1 .. 31
@@ -25,6 +36,9 @@ public class CromixTime {
     private final static byte[] tab2 = { 1, 2, 4, 5, 7, 8, 9,11,12,14,15,16};
 
     private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    public static final CromixTime unixEpoch = new CromixTime((byte)70,(byte)01,(byte)1,(byte)0,(byte)0,(byte)0);
+    public static final CromixTime epoch = new CromixTime((byte)60,(byte)03,(byte)1,(byte)0,(byte)0,(byte)0);
 
     private final static String[] MONTHS =
             {"", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -95,14 +109,39 @@ public class CromixTime {
         return ct;
     }
 
+    public static CromixTime now() {
+        return from(Instant.now());
+    }
+
+    public static CromixTime from(Date date) {
+        return from(date.toInstant());
+    }
+
+    public static CromixTime from(Instant instant) {
+        long mtime = instant.getEpochSecond()
+                + ZoneId.systemDefault().getRules().getOffset(instant).getTotalSeconds();
+        return from(mtime + unixEpoch.utime() - epoch.utime());
+    }
+
+    public static CromixTime from(byte[] raw) {
+        CromixTime ct = new CromixTime();
+        ct.year = raw[YEAR];
+        ct.month = raw[MONTH];
+        ct.day = raw[DAY];
+        ct.hour = raw[HOUR];
+        ct.minute = raw[MINUTE];
+        ct.second = raw[SECOND];
+        return ct;
+    }
+
     public byte[] toBytes() {
         byte[] data = new byte[6];
-        data[0] = year;
-        data[1] = month;
-        data[2] = day;
-        data[3] = hour;
-        data[4] = minute;
-        data[5] = second;
+        data[YEAR] = year;
+        data[MONTH] = month;
+        data[DAY] = day;
+        data[HOUR] = hour;
+        data[MINUTE] = minute;
+        data[SECOND] = second;
         return data;
     }
 
