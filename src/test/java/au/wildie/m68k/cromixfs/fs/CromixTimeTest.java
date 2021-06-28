@@ -2,6 +2,7 @@ package au.wildie.m68k.cromixfs.fs;
 
 import org.junit.Test;
 
+import java.util.Calendar;
 import java.util.Date;
 
 import static org.hamcrest.Matchers.*;
@@ -16,7 +17,10 @@ public class CromixTimeTest {
         System.out.printf("Now:          %s\n", CromixTime.now().toFtarString());
 
         CromixTime now = CromixTime.now();
-        assertThat(now.getYear(), is((byte)121));
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(new Date());
+        assertThat(now.getYear(), is((byte)(cal.get(Calendar.YEAR) - 1900)));
     }
 
     @Test
@@ -25,6 +29,10 @@ public class CromixTimeTest {
         System.out.printf("Now:          %s\n", CromixTime.from(now).toFtarString());
 
         CromixTime nowC = CromixTime.now();
-        assertThat(nowC.getYear(), is((byte)121));
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(now);
+
+        assertThat(nowC.getYear(), is((byte)(cal.get(Calendar.YEAR) - 1900)));
     }
 }
