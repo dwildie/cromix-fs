@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static au.wildie.m68k.cromixfs.fs.cromix.Inode.ALLOCATED;
+import static au.wildie.m68k.cromixfs.fs.cromix.Inode.INDIRECT_1_BLOCK;
 import static au.wildie.m68k.cromixfs.fs.cromix.InodeType.DIRECTORY;
 
 public class Check {
@@ -76,25 +77,30 @@ public class Check {
             /* Read all directory entries   */
             /* and do further check for     */
             /* each allocated entry.        */
-            DirectoryBlock directoryBlock = DirectoryBlock.from(disk, inode.getBlocks()[0]);
-            for (DirectoryEntry entry : directoryBlock.getEntries()) {
-                if (entry.getType() == DirectoryEntryStatus.ALLOCATED) {
-                    if (entry.getInodeNumber() == 0 || entry.getInodeNumber() > inodeManager.getLastInodeNumber()) {
-                        throw new CheckException(String.format("Directory %s, inode %d is out of bounds\n", entry.getName(), entry.getInodeNumber()));
-                    }
-                    itab.entries++;
-                    Itab itabc = itabs.get(entry.getInodeNumber() - 1);
-                    itabc.cntlinks++;
-                    if ((itabc.flags & if_child) != 0) {
-                        itabc.flags &= ~if_child;
-                        if (itabc.parent != inode.getNumber()) {
-                            itabc.flags |= if_wrongp;
-                            itabc.parent = inode.getNumber();
+            for (int j = 0; j < INDIRECT_1_BLOCK; j++) {
+                if (inode.getBlocks()[j] == 0) {
+                    continue;
+                }
+                DirectoryBlock directoryBlock = DirectoryBlock.from(disk, inode.getBlocks()[j]);
+                for (DirectoryEntry entry : directoryBlock.getEntries()) {
+                    if (entry.getStatus() == DirectoryEntryStatus.ALLOCATED) {
+                        if (entry.getInodeNumber() == 0 || entry.getInodeNumber() > inodeManager.getLastInodeNumber()) {
+                            throw new CheckException(String.format("Directory %s, inode %d is out of bounds\n", entry.getName(), entry.getInodeNumber()));
                         }
-                    } else if (itabc.parent == 0) {
-                        itabc.parent = inode.getNumber();
-                    } else if (itabc.parent != inode.getNumber()) {
-                        itabc.flags |= if_many;
+                        itab.entries++;
+                        Itab itabc = itabs.get(entry.getInodeNumber() - 1);
+                        itabc.cntlinks++;
+                        if ((itabc.flags & if_child) != 0) {
+                            itabc.flags &= ~if_child;
+                            if (itabc.parent != inode.getNumber()) {
+                                itabc.flags |= if_wrongp;
+                                itabc.parent = inode.getNumber();
+                            }
+                        } else if (itabc.parent == 0) {
+                            itabc.parent = inode.getNumber();
+                        } else if (itabc.parent != inode.getNumber()) {
+                            itabc.flags |= if_many;
+                        }
                     }
                 }
             }

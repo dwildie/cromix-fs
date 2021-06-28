@@ -44,15 +44,19 @@ public class DirectoryBlock {
     }
 
     public DirectoryEntry findEntry(String name) {
-        return Arrays.stream(entries).filter(entry -> entry.getType() == ALLOCATED && entry.getName().equals(name)).findFirst().orElse(null);
+        return Arrays.stream(entries).filter(entry -> entry.getStatus() == ALLOCATED && entry.getName().equals(name)).findFirst().orElse(null);
     }
 
     public DirectoryEntry getFirstUnusedEntry() {
-        return Arrays.stream(entries).filter(entry -> entry.getType() == NOT_ALLOCATED).findFirst().orElse(null);
+        return Arrays.stream(entries).filter(entry -> entry.getStatus() == NOT_ALLOCATED).findFirst().orElse(null);
+    }
+
+    public int getUnusedEntries() {
+        return (int)Arrays.stream(entries).filter(entry -> entry.getStatus() == NOT_ALLOCATED).count();
     }
 
     public void flush(DiskInterface disk) {
-        System.out.printf("Flush directory block %d\n", blockNumber);
+//        System.out.printf("Flush directory block %d\n", blockNumber);
         try {
             byte[] data = disk.getBlock(blockNumber);
             for (int i = 0; i < DIRECTORY_ENTRIES; i++) {
@@ -61,5 +65,15 @@ public class DirectoryBlock {
         } catch (IOException e) {
             throw new BlockUnavailableException(blockNumber, e);
         }
+    }
+
+    public int getExtent() {
+        int last = -1;
+        for (int i = 0; i < entries.length; i++) {
+            if (entries[i].getStatus() == ALLOCATED) {
+                last = i;
+            }
+        }
+        return (last + 1) * DIRECTORY_ENTRY_LENGTH;
     }
 }

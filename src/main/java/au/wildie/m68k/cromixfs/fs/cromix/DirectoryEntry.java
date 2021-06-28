@@ -15,12 +15,12 @@ import static au.wildie.m68k.cromixfs.utils.BinUtils.*;
 public class DirectoryEntry {
     public static final int DIRECTORY_ENTRY_LENGTH = 0x20;
 
-    private static final int NAME_LENGTH = 0x18;
+    public static final int NAME_LENGTH = 0x18;
     private static final int OFFSET_STATUS = 0x1c;
     private static final int OFFSET_INODE = 0x1e;
     private static final int FLAG_ALLOCATED = 0x8000;
 
-    private DirectoryEntryStatus type;
+    private DirectoryEntryStatus status;
     private String name;
     private int inodeNumber;
     private boolean dirty;
@@ -38,8 +38,8 @@ public class DirectoryEntry {
         }
     }
 
-    public DirectoryEntry(DirectoryEntryStatus type, DirectoryBlock directoryBlock) {
-        this.type = type;
+    public DirectoryEntry(DirectoryEntryStatus status, DirectoryBlock directoryBlock) {
+        this.status = status;
         this.directoryBlock = directoryBlock;
     }
 
@@ -50,7 +50,7 @@ public class DirectoryEntry {
     public void toBytes(byte[] data, int offset) {
         if (name != null) {
             writeString(name, data, offset, NAME_LENGTH);
-            writeWord(type == ALLOCATED ? FLAG_ALLOCATED : 0, data, offset + OFFSET_STATUS);
+            writeWord(status == ALLOCATED ? FLAG_ALLOCATED : 0, data, offset + OFFSET_STATUS);
             writeWord(inodeNumber, data, offset + OFFSET_INODE);
         } else {
             Arrays.fill(data, offset, offset + DIRECTORY_ENTRY_LENGTH, (byte)0);

@@ -100,7 +100,7 @@ public class CromixFileSystemTest {
 
     @Test
     public void list() throws IOException {
-        File added = new File("/tmp/added.imd");
+        File added = new File("/tmp/added1.imd");
 //        File added = new File("/tmp/blank.imd");
 
         try (FileInputStream src = new FileInputStream(added)) {

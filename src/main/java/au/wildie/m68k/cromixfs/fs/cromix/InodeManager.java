@@ -39,7 +39,7 @@ public class InodeManager {
                 inode.setType(DIRECTORY);
                 inode.setParent(1);
                 inode.setLinks(1);
-                inode.setFileSize(192);   // TODO
+                inode.setFileSize(0);
                 inode.setOwnerPermission(ACCESS_READ | ACCESS_EXEC | ACCESS_WRITE | ACCESS_APPEND);
                 inode.setGroupPermission(ACCESS_READ | ACCESS_EXEC);
                 inode.setOtherPermission(ACCESS_READ | ACCESS_EXEC);
@@ -64,7 +64,7 @@ public class InodeManager {
     }
 
     public void flush(Inode inode) {
-        System.out.printf("Flush inode %d\n", inode.getNumber());
+//        System.out.printf("Flush inode %d\n", inode.getNumber());
         int blockNumber = superBlock.getFirstInodeBlock() + ((inode.getNumber() - 1) / INODES_PER_BLOCK);
         try {
             byte[] data = disk.getBlock(blockNumber);
