@@ -37,7 +37,8 @@ public class CromixTime {
 
     private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    private static final CromixTime epoch = new CromixTime((byte)60,(byte)03,(byte)0,(byte)0,(byte)0,(byte)0);
+    public static final CromixTime unixEpoch = new CromixTime((byte)70,(byte)01,(byte)1,(byte)0,(byte)0,(byte)0);
+    public static final CromixTime epoch = new CromixTime((byte)60,(byte)03,(byte)1,(byte)0,(byte)0,(byte)0);
 
     private final static String[] MONTHS =
             {"", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -109,10 +110,17 @@ public class CromixTime {
     }
 
     public static CromixTime now() {
-        long mtime = Instant.now().getEpochSecond()
-                + 8 * 3600
-                + ZoneId.systemDefault().getRules().getOffset(Instant.now()).getTotalSeconds();
-        return from(mtime + epoch.utime());
+        return from(Instant.now());
+    }
+
+    public static CromixTime from(Date date) {
+        return from(date.toInstant());
+    }
+
+    public static CromixTime from(Instant instant) {
+        long mtime = instant.getEpochSecond()
+                + ZoneId.systemDefault().getRules().getOffset(instant).getTotalSeconds();
+        return from(mtime + unixEpoch.utime() - epoch.utime());
     }
 
     public static CromixTime from(byte[] raw) {
