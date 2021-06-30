@@ -6,6 +6,7 @@ import static au.wildie.m68k.cromixfs.fs.cromix.PointerBlock.BLOCK_POINTER_COUNT
 import static au.wildie.m68k.cromixfs.utils.BinUtils.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
@@ -140,6 +141,49 @@ public class Inode {
         for (int i = 0; i < INODE_BLOCKS; i++) {
             writeDWord(blocks[i], data, offset + INODE_POINTERS_OFFSET + i * 4);
         }
+    }
+
+    public int countUsedBlocks(DiskInterface disk) {
+        AtomicInteger used = new AtomicInteger();
+        for (int i = 0; i < INDIRECT_1_BLOCK; i++) {
+            if (blocks[i] != 0) {
+                used.getAndIncrement();
+            }
+        }
+
+        if (blocks[INDIRECT_1_BLOCK] != 0) {
+            used.addAndGet((int) PointerBlock.from(blocks[INDIRECT_1_BLOCK], disk).getPointerList().stream()
+                    .filter(blockNumber -> blockNumber != 0)
+                    .count() + 1);
+        }
+
+        if (blocks[INDIRECT_2_BLOCK] != 0) {
+            used.getAndIncrement();
+            PointerBlock.from(blocks[INDIRECT_2_BLOCK], disk).getPointerList().stream()
+                    .filter(blockNumber -> blockNumber != 0)
+                    .peek(blockNumber -> used.getAndIncrement())
+                    .map(blockNumber -> PointerBlock.from(blockNumber, disk))
+                    .flatMap(pointerBlock -> pointerBlock.getPointerList().stream())
+                    .filter(blockNumber -> blockNumber != 0)
+                    .forEach(blockNumber -> used.getAndIncrement());
+        }
+
+        if (blocks[INDIRECT_3_BLOCK] != 0) {
+            used.getAndIncrement();
+            PointerBlock.from(blocks[INDIRECT_3_BLOCK], disk).getPointerList().stream()
+                    .filter(blockNumber -> blockNumber != 0)
+                    .peek(blockNumber -> used.getAndIncrement())
+                    .map(blockNumber -> PointerBlock.from(blockNumber, disk))
+                    .flatMap(pointerBlock -> pointerBlock.getPointerList().stream())
+                    .filter(blockNumber -> blockNumber != 0)
+                    .peek(blockNumber -> used.getAndIncrement())
+                    .map(blockNumber -> PointerBlock.from(blockNumber, disk))
+                    .flatMap(pointerBlock -> pointerBlock.getPointerList().stream())
+                    .filter(blockNumber -> blockNumber != 0)
+                    .forEach(blockNumber -> used.getAndIncrement());
+        }
+
+        return used.get();
     }
 
     public List<Integer> getDataBlocks(DiskInterface disk) {

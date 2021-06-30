@@ -93,6 +93,8 @@ public class IMDImage extends DiskImage {
         }
         index++; // Skip EOF
 
+        out.printf("IMD header: %s\n", header);
+
         int offset = 0;
 
         while (index < raw.length) {
@@ -202,7 +204,6 @@ public class IMDImage extends DiskImage {
         heads++;
         cylinders++;
 
-        out.println(header);
         out.printf("Read %d tracks%n", tracks.size());
         out.printf("%n%s%n", getSectorErrorSummary());
     }
@@ -399,7 +400,7 @@ public class IMDImage extends DiskImage {
         }
 
         if (summary.length() == 0) {
-            return "No sector errors";
+            return "No sector errors\n";
         }
 
         summary.insert(0, "Sector errors:\n");

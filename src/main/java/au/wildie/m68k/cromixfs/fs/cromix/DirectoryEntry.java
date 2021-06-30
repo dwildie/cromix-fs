@@ -20,25 +20,28 @@ public class DirectoryEntry {
     private static final int OFFSET_INODE = 0x1e;
     private static final int FLAG_ALLOCATED = 0x8000;
 
+    private final int index;
     private DirectoryEntryStatus status;
     private String name;
     private int inodeNumber;
     private boolean dirty;
     private final DirectoryBlock directoryBlock;
 
-    public static DirectoryEntry from(byte[] data, int offset, DirectoryBlock directoryBlock) {
+    public static DirectoryEntry from(byte[] data, int index, DirectoryBlock directoryBlock) {
+        int offset = index * DIRECTORY_ENTRY_LENGTH;
         int status = readWord(data, offset + OFFSET_STATUS);
         if (status == FLAG_ALLOCATED) {
-            DirectoryEntry entry = new DirectoryEntry(ALLOCATED, directoryBlock);
+            DirectoryEntry entry = new DirectoryEntry(index, ALLOCATED, directoryBlock);
             entry.name = readString(data, offset, NAME_LENGTH);
             entry.inodeNumber = readWord(data, offset + OFFSET_INODE);
             return entry;
         } else {
-            return new DirectoryEntry(NOT_ALLOCATED, directoryBlock);
+            return new DirectoryEntry(index, NOT_ALLOCATED, directoryBlock);
         }
     }
 
-    public DirectoryEntry(DirectoryEntryStatus status, DirectoryBlock directoryBlock) {
+    public DirectoryEntry(int index, DirectoryEntryStatus status, DirectoryBlock directoryBlock) {
+        this.index = index;
         this.status = status;
         this.directoryBlock = directoryBlock;
     }

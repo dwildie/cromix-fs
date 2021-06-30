@@ -1,10 +1,10 @@
 package au.wildie.m68k.cromixfs.disk.floppy;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
-import au.wildie.m68k.cromixfs.fs.CDOSFileSystem;
 import au.wildie.m68k.cromixfs.fs.FileSystem;
 import au.wildie.m68k.cromixfs.fs.FileSystemOps;
 import au.wildie.m68k.cromixfs.fs.FileSystems;
+import au.wildie.m68k.cromixfs.fs.cdos.CDOSFileSystem;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.Test;

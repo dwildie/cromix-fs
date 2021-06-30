@@ -98,18 +98,34 @@ public class CromixFileSystem implements FileSystem {
         readDirectory("", inodeManager.getInode( 1), EXTRACT, path, out);
     }
 
-    protected CromixFileSystemStats check(PrintStream out) {
-        Check dcheck = new Check(inodeManager, disk);
-        dcheck.passOne();
-        dcheck.passTwo();
-
-        InodeStats inodeStats = new InodeStats(superBlock);
-
-        inodeManager.getAllInodes().forEach(inodeStats::countUsage);
-
+    public void dumpInodes(PrintStream out) {
         inodeManager.getAllInodes().stream()
                 .filter(inode -> inode.getType() != UNUSED && inode.getType() != UNKNOWN)
                 .forEach(out::print);
+    }
+
+    public CromixFileSystemStats check(PrintStream out) {
+        Check check = new Check(superBlock, inodeManager, disk);
+        out.println("Executing dcheck");
+        check.passOne();
+        int dcheckErrors = check.passTwo(out);
+        if (dcheckErrors == 0) {
+            out.println("No errors\n");
+        } else {
+            out.println("Completed dcheck\n");
+        }
+
+        if (dcheckErrors == 0) {
+            out.println("Executing inode block check");
+            if (check.fileCheck(out) == 0) {
+                out.println("No inode block errors\n");
+            } else {
+                out.println("Completed inode block check\n");
+            }
+        }
+
+        InodeStats inodeStats = new InodeStats(superBlock);
+        inodeManager.getAllInodes().forEach(inodeStats::countUsage);
 
         for (int i = 0; i < FREE_INODE_LIST_SIZE; i++) {
             int inodeNumber = superBlock.getFreeInodeList()[i];
@@ -391,7 +407,7 @@ public class CromixFileSystem implements FileSystem {
                         } else {
                             out.printf("%9d", entryInode.getType() == DIRECTORY ? entryInode.getDirectoryEntryCount() : entryInode.getFileSize());
                         }
-                        out.printf(" %s %2d %s %s %s %5d %5d %s %s%s%s%n",
+                        out.printf(" %s %2d %s %s %s %5d %5d %s %4d %s%s%s%n",
                                 entryInode.getTypeChar(),
                                 entryInode.getLinks(),
                                 getPermission(entryInode.getOwnerPermission()),
@@ -400,6 +416,7 @@ public class CromixFileSystem implements FileSystem {
                                 entryInode.getOwner(),
                                 entryInode.getGroup(),
                                 entryInode.getModified().toString(),
+                                entryInode.getNumber(),
                                 srcPath,
                                 FILE_SEP,
                                 entry.getName());
