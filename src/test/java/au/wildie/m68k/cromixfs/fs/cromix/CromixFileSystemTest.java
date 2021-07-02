@@ -119,6 +119,47 @@ public class CromixFileSystemTest {
        }
     }
 
+
+    @Test
+    public void append() throws IOException {
+        DiskInterface disk = CromixIMDFloppyDisk.create("CLDSDD", System.out);
+        assertThat(disk, notNullValue());
+
+        CromixFileSystem fs = CromixFileSystem.initialise(disk);
+        assertThat(fs, notNullValue());
+        assertThat(CromixFileSystem.isValid(disk), is(true));
+
+        CromixFileSystemStats stats = fs.check(System.out);
+        assertThat(stats, notNullValue());
+
+        File t1 = new File("/tmp/t1");
+        assertThat(t1, notNullValue());
+        assertThat(t1.exists(), is(true));
+        assertThat(t1.isDirectory(), is(true));
+        fs.addDirectory(t1, System.out);
+
+        fs.list(System.out);
+
+        fs.check(System.out);
+
+        File t2 = new File("/tmp/t2");
+        assertThat(t2, notNullValue());
+        assertThat(t2.exists(), is(true));
+        assertThat(t2.isDirectory(), is(true));
+        fs.append(t2, System.out);
+
+        fs.list(System.out);
+
+        fs.check(System.out);
+
+        File t3 = new File("/tmp/t3");
+        if (t3.exists()) {
+            t3.delete();
+        }
+        t3.mkdirs();
+        fs.extract(t3.getPath(), System.out);
+    }
+
     @Test
     public void addDirectory() throws IOException {
 
@@ -142,11 +183,11 @@ public class CromixFileSystemTest {
 
         assertStats(stats, expectedStats);
 
-        File file = new File("/tmp/blank");
+        File file = new File("/home/dwildie/cromemcos/m/cromemco/code/disks/094 Cromix 162 disk1 bootable");
         assertThat(file, notNullValue());
         assertThat(file.exists(), is(true));
         assertThat(file.isDirectory(), is(true));
-        fs.addDirectory(file);
+        fs.addDirectory(file, System.out);
 
         fs.list(System.out);
 

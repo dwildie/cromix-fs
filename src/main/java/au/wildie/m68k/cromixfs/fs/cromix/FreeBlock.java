@@ -54,7 +54,6 @@ public class FreeBlock {
         return freeBlock;
     }
 
-
     public static FreeBlock from(SuperBlock superBlock, DiskInterface disk) {
         FreeBlock freeBlock = new FreeBlock();
         freeBlock.blockNumber = 0;
@@ -118,7 +117,7 @@ public class FreeBlock {
         return list[index];
     }
 
-    public int takeNextFreeBlockNumber() {
+    public int takeNextFreeBlock() {
         if (count == 1) {
             if (list[0] == 0) {
                 throw new FreeBlockListException("No more blocks");
@@ -135,6 +134,26 @@ public class FreeBlock {
         list[count - 1] = 0;
         count--;
         return blockNumber;
+    }
+
+    public boolean returnBlock(int blockNumber) {
+        if (count == FREE_BLOCK_LIST_SIZE) {
+            // this block is full, use the to-be-freed block as the next list block
+            FreeBlock newBlock = new FreeBlock();
+            newBlock.setBlockNumber(blockNumber);
+            newBlock.setCount(FREE_BLOCK_LIST_SIZE);
+            newBlock.setNext(next);
+            System.arraycopy(list, 0, newBlock.list, 0, FREE_BLOCK_LIST_SIZE);
+            next = newBlock;
+            count = 1;
+            Arrays.fill(list, 0);
+            list[0] = next.blockNumber;
+            return true;
+        } else {
+            list[count] = blockNumber;
+            count++;
+            return false;
+        }
     }
 
     public void visit(FreeBlockNumberVisitor visitor) {

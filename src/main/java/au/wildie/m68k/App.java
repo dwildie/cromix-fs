@@ -81,6 +81,26 @@ public class App {
                 ftar.create(args[2], archive, System.out);
             }
             return;
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("-a")) {
+            if (!new File(args[1]).exists()) {
+                System.out.printf("Cannot open image file %s\n", args[1]);
+                return;
+            }
+            File path = new File(args[2]);
+            if (!path.exists()) {
+                System.out.printf("Source path %s does not exist\n", args[1]);
+                return;
+            }
+            FileSystemOps fs = get(args[1]);
+            if (!(fs instanceof CromixFileSystem)) {
+                System.out.println("Not a Cromix filesystem");
+                return;
+            }
+            ((CromixFileSystem)fs).append(path, System.out);
+            try (FileOutputStream archive = new FileOutputStream(args[1])) {
+                ((CromixFileSystem)fs).persist(archive);
+            }
+            return;
         } else if (args.length == 3 && args[0].equalsIgnoreCase("-m")) {
             if (!new File(args[2]).exists()) {
                 System.out.printf("Source path %s does not exist\n", args[1]);
@@ -94,7 +114,7 @@ public class App {
             if (file.getParentFile() != null && !file.getParentFile().exists()) {
                 file.getParentFile().mkdirs();
             }
-            fs.addDirectory(new File(args[2]));
+            fs.addDirectory(new File(args[2]), System.out);
 
             try (FileOutputStream archive = new FileOutputStream(file)) {
                 fs.persist(archive);
@@ -153,8 +173,11 @@ public class App {
         System.out.print("\nExtract files from an image to path:\n");
         System.out.printf("  java -jar %s -x file.imd | file.hfe path\n", jarName);
 
-        System.out.print("\nCreate a Cromix ftar image containing files from path:\n");
+        System.out.print("\nCreate a new Cromix ftar image containing files from path:\n");
         System.out.printf("  java -jar %s -f file.imd path\n", jarName);
+
+        System.out.print("\nAppend file(s) to an existing mountable Cromix image:\n");
+        System.out.printf("  java -jar %s -a file.imd path\n", jarName);
 
         System.out.print("\nCreate a mountable Cromix image containing files from path:\n");
         System.out.printf("  java -jar %s -m file.imd path\n", jarName);

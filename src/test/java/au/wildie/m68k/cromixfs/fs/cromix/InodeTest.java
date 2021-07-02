@@ -20,7 +20,7 @@ public class InodeTest {
         assertThat(disk, notNullValue());
 
         SuperBlock superBlock = SuperBlock.initialise("CLDSDD");
-        FreeBlockList freeBlockList = FreeBlockList.create(superBlock);
+        FreeBlockList freeBlockList = FreeBlockList.create(superBlock, disk);
 
         Inode inode = new Inode(1);
         assertThat(inode.getUsedBlockCount(), is(0));
