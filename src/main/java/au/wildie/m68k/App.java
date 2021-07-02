@@ -168,10 +168,10 @@ public class App {
         System.out.printf("  java -jar %s -di file.imd\n", jarName);
 
         System.out.print("\nList files in an image:\n");
-        System.out.printf("  java -jar %s -l file.imd | file.hfe\n", jarName);
+        System.out.printf("  java -jar %s -l file.imd\n", jarName);
 
         System.out.print("\nExtract files from an image to path:\n");
-        System.out.printf("  java -jar %s -x file.imd | file.hfe path\n", jarName);
+        System.out.printf("  java -jar %s -x file.imd path\n", jarName);
 
         System.out.print("\nCreate a new Cromix ftar image containing files from path:\n");
         System.out.printf("  java -jar %s -f file.imd path\n", jarName);
