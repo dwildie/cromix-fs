@@ -17,6 +17,7 @@ import au.wildie.m68k.cromixfs.disk.st.STDiskException;
 import au.wildie.m68k.cromixfs.disk.vfd.InvalidVFDImageException;
 import au.wildie.m68k.cromixfs.disk.vfd.VFDImage;
 import au.wildie.m68k.cromixfs.fs.cromix.CromixFileSystem;
+import au.wildie.m68k.cromixfs.fs.cdos.CDOSFileSystem;
 import au.wildie.m68k.cromixfs.ftar.CromixFtar;
 import au.wildie.m68k.cromixfs.ftar.FTarIMDDisk;
 import au.wildie.m68k.cromixfs.ftar.FTarHFEDisk;

@@ -9,20 +9,20 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 public class CromixStDiskTest {
-    private static final String SCRATCH_FILE = "/home/dwildie/m68000/cromix-release-1/cromix-release.iso";
-    private static final String LIST_FILE =    "/home/dwildie/m68000/cromix-release-1/file-system/cromix-release.list";
-    private static final String EXTRACT_PATH = "/home/dwildie/m68000/cromix-release-1/file-system/dump";
+    private static final String IMD_FILE = "/home/dwildie/m68000/cromix/disk0_848.img";
+    private static final String LIST_FILE =    "/home/dwildie/m68000/cromix/disk0_848.list";
+    private static final String EXTRACT_PATH = "/home/dwildie/m68000/cromix/disk0_848.dump";
 
     @Test
     public void list() throws IOException, STDiskException {
 
-        File file = new File(SCRATCH_FILE);
+        File file = new File(IMD_FILE);
         if (!file.exists()) {
-            throw new IllegalArgumentException(String.format("Image file %s does not exist", SCRATCH_FILE));
+            throw new IllegalArgumentException(String.format("Image file %s does not exist", IMD_FILE));
         }
 
-        try (FileOutputStream out = new FileOutputStream(new File(LIST_FILE))) {
-            CromixStDisk stDisk = new CromixStDisk(SCRATCH_FILE);
+        try (FileOutputStream out = new FileOutputStream(LIST_FILE)) {
+            CromixStDisk stDisk = new CromixStDisk(IMD_FILE);
             stDisk.list(new PrintStream(out));
         }
         System.out.println("done");
@@ -31,9 +31,9 @@ public class CromixStDiskTest {
     @Test
     public void extract() throws IOException, STDiskException {
 
-        File imdFile = new File(SCRATCH_FILE);
+        File imdFile = new File(IMD_FILE);
         if (!imdFile.exists()) {
-            throw new IllegalArgumentException(String.format("Image file %s does not exist", SCRATCH_FILE));
+            throw new IllegalArgumentException(String.format("Image file %s does not exist", IMD_FILE));
         }
 
         File extractDir = new File(EXTRACT_PATH);
@@ -42,7 +42,7 @@ public class CromixStDiskTest {
         }
         extractDir.mkdirs();
 
-        CromixStDisk stDisk = new CromixStDisk(SCRATCH_FILE);
+        CromixStDisk stDisk = new CromixStDisk(IMD_FILE);
         stDisk.extract(EXTRACT_PATH, System.out);
         System.out.println("done");
     }

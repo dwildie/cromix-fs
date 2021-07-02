@@ -5,7 +5,9 @@ import static au.wildie.m68k.cromixfs.fs.cromix.InodeType.*;
 import static au.wildie.m68k.cromixfs.fs.cromix.PointerBlock.BLOCK_POINTER_COUNT;
 import static au.wildie.m68k.cromixfs.utils.BinUtils.*;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
@@ -142,6 +144,49 @@ public class Inode {
         }
     }
 
+    public int countUsedBlocks(DiskInterface disk) {
+        AtomicInteger used = new AtomicInteger();
+        for (int i = 0; i < INDIRECT_1_BLOCK; i++) {
+            if (blocks[i] != 0) {
+                used.getAndIncrement();
+            }
+        }
+
+        if (blocks[INDIRECT_1_BLOCK] != 0) {
+            used.addAndGet((int) PointerBlock.from(blocks[INDIRECT_1_BLOCK], disk).getPointerList().stream()
+                    .filter(blockNumber -> blockNumber != 0)
+                    .count() + 1);
+        }
+
+        if (blocks[INDIRECT_2_BLOCK] != 0) {
+            used.getAndIncrement();
+            PointerBlock.from(blocks[INDIRECT_2_BLOCK], disk).getPointerList().stream()
+                    .filter(blockNumber -> blockNumber != 0)
+                    .peek(blockNumber -> used.getAndIncrement())
+                    .map(blockNumber -> PointerBlock.from(blockNumber, disk))
+                    .flatMap(pointerBlock -> pointerBlock.getPointerList().stream())
+                    .filter(blockNumber -> blockNumber != 0)
+                    .forEach(blockNumber -> used.getAndIncrement());
+        }
+
+        if (blocks[INDIRECT_3_BLOCK] != 0) {
+            used.getAndIncrement();
+            PointerBlock.from(blocks[INDIRECT_3_BLOCK], disk).getPointerList().stream()
+                    .filter(blockNumber -> blockNumber != 0)
+                    .peek(blockNumber -> used.getAndIncrement())
+                    .map(blockNumber -> PointerBlock.from(blockNumber, disk))
+                    .flatMap(pointerBlock -> pointerBlock.getPointerList().stream())
+                    .filter(blockNumber -> blockNumber != 0)
+                    .peek(blockNumber -> used.getAndIncrement())
+                    .map(blockNumber -> PointerBlock.from(blockNumber, disk))
+                    .flatMap(pointerBlock -> pointerBlock.getPointerList().stream())
+                    .filter(blockNumber -> blockNumber != 0)
+                    .forEach(blockNumber -> used.getAndIncrement());
+        }
+
+        return used.get();
+    }
+
     public List<Integer> getDataBlocks(DiskInterface disk) {
         List<Integer> dataBlocks = new ArrayList<>();
         for (int i = 0; i < INDIRECT_1_BLOCK; i++) {
@@ -178,6 +223,44 @@ public class Inode {
         }
 
         return dataBlocks;
+    }
+
+    protected void deleteFileBlocks(DiskInterface disk, FreeBlockList freeBlockList) {
+        List<Integer> blockNumbers = new ArrayList<>(getDataBlocks(disk));
+
+        // Return any pointer blocks
+        if (blocks[INDIRECT_1_BLOCK] != 0) {
+            blockNumbers.add(blocks[INDIRECT_1_BLOCK]);
+        }
+
+        if (blocks[INDIRECT_2_BLOCK] != 0) {
+            blockNumbers.addAll(PointerBlock.from(blocks[INDIRECT_2_BLOCK], disk).getPointerList().stream()
+                    .filter(blockNumber -> blockNumber != 0)
+                    .collect(Collectors.toList()));
+            blockNumbers.add(blocks[INDIRECT_2_BLOCK]);
+        }
+
+        if (blocks[INDIRECT_3_BLOCK] != 0) {
+            PointerBlock.from(blocks[INDIRECT_3_BLOCK], disk).getPointerList().stream()
+                    .filter(blockNumber -> blockNumber != 0)
+                    .forEach(pb -> {
+                        blockNumbers.addAll(PointerBlock.from(pb, disk).getPointerList().stream()
+                                .filter(blockNumber -> blockNumber != 0)
+                                .collect(Collectors.toList()));
+                        blockNumbers.add(pb);
+                    });
+            blockNumbers.add(blocks[INDIRECT_3_BLOCK]);
+        }
+
+        // Return all the blocks
+        blockNumbers.stream().sorted(Collections.reverseOrder()).forEach(freeBlockList::returnBlock);
+        freeBlockList.flush();
+
+        for (int i = 0; i <= INDIRECT_3_BLOCK; i++) {
+            if (blocks[i] != 0) {
+                blocks[i] = 0;
+            }
+        }
     }
 
     public void addBlock(int blockNumber, DiskInterface disk, FreeBlockList freeBlockList) {

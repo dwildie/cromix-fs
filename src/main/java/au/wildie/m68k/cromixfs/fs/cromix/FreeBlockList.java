@@ -8,33 +8,37 @@ import static au.wildie.m68k.cromixfs.fs.cromix.SuperBlock.FREE_BLOCK_LIST_SIZE;
 
 public class FreeBlockList {
     private final SuperBlock superBlock;
+    private final DiskInterface disk;
     private FreeBlock freeBlock;
 
-    public static FreeBlockList create(SuperBlock superBlock) {
-        FreeBlockList freeBlockList = new FreeBlockList(superBlock);
+    public static FreeBlockList create(SuperBlock superBlock, DiskInterface disk) {
+        FreeBlockList freeBlockList = new FreeBlockList(superBlock, disk);
         freeBlockList.freeBlock = FreeBlock.create(0, superBlock);
 
         // Update super block
         superBlock.setFreeBlockCount(freeBlockList.freeBlock.getCount());
-        for (int i = 0; i < FREE_BLOCK_LIST_SIZE; i++) {
-            superBlock.getFreeBlockList()[i] = freeBlockList.freeBlock.getList()[i];
-        }
+        System.arraycopy(freeBlockList.freeBlock.getList(), 0, superBlock.getFreeBlockList(), 0, FREE_BLOCK_LIST_SIZE);
         superBlock.setDirty(true);
         return freeBlockList;
     }
 
     public static FreeBlockList readFreeBlockList(SuperBlock superBlock, DiskInterface disk) {
-        FreeBlockList freeBlockList = new FreeBlockList(superBlock);
+        FreeBlockList freeBlockList = new FreeBlockList(superBlock, disk);
         freeBlockList.freeBlock = FreeBlock.from(superBlock, disk);
         return freeBlockList;
     }
 
-    public FreeBlockList(SuperBlock superBlock) {
+    public FreeBlockList(SuperBlock superBlock, DiskInterface disk) {
         this.superBlock = superBlock;
+        this.disk = disk;
     }
 
-    public void flush(DiskInterface disk) throws IOException {
-        freeBlock.flush(superBlock, disk);
+    public void flush() {
+        try {
+            freeBlock.flush(superBlock, disk);
+        } catch (IOException e) {
+             throw new FreeBlockListException("Failed to flush free block list", e);
+        }
     }
 
     public void visit(FreeBlockNumberVisitor visitor) {
@@ -46,9 +50,13 @@ public class FreeBlockList {
     }
 
     public int getAvailableBlock() {
-        int blockNumber = freeBlock.takeNextFreeBlockNumber();
+        int blockNumber = freeBlock.takeNextFreeBlock();
         freeBlock.flush(superBlock);
         return blockNumber;
     }
 
+    public void returnBlock(int block) {
+        freeBlock.returnBlock(block);
+        freeBlock.flush(superBlock);
+    }
 }

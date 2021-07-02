@@ -50,8 +50,8 @@ public class CromixFileSystem implements FileSystem {
         SuperBlock superBlock = SuperBlock.initialise(disk.getFormatLabel());
 
         // Create the free block list
-        FreeBlockList freeBlockList = FreeBlockList.create(superBlock);
-        freeBlockList.flush(disk);
+        FreeBlockList freeBlockList = FreeBlockList.create(superBlock, disk);
+        freeBlockList.flush();
 
         // Create the inodes
         InodeManager inodeManager = InodeManager.create(superBlock, disk, freeBlockList);
@@ -98,18 +98,34 @@ public class CromixFileSystem implements FileSystem {
         readDirectory("", inodeManager.getInode( 1), EXTRACT, path, out);
     }
 
-    protected CromixFileSystemStats check(PrintStream out) {
-        Check dcheck = new Check(inodeManager, disk);
-        dcheck.passOne();
-        dcheck.passTwo();
-
-        InodeStats inodeStats = new InodeStats(superBlock);
-
-        inodeManager.getAllInodes().forEach(inodeStats::countUsage);
-
+    public void dumpInodes(PrintStream out) {
         inodeManager.getAllInodes().stream()
                 .filter(inode -> inode.getType() != UNUSED && inode.getType() != UNKNOWN)
                 .forEach(out::print);
+    }
+
+    public CromixFileSystemStats check(PrintStream out) {
+        Check check = new Check(superBlock, inodeManager, disk);
+        out.println("Executing dcheck");
+        check.passOne();
+        int dcheckErrors = check.passTwo(out);
+        if (dcheckErrors == 0) {
+            out.println("No errors\n");
+        } else {
+            out.println("Completed dcheck\n");
+        }
+
+        if (dcheckErrors == 0) {
+            out.println("Executing inode block check");
+            if (check.fileCheck(out) == 0) {
+                out.println("No inode block errors\n");
+            } else {
+                out.println("Completed inode block check\n");
+            }
+        }
+
+        InodeStats inodeStats = new InodeStats(superBlock);
+        inodeManager.getAllInodes().forEach(inodeStats::countUsage);
 
         for (int i = 0; i < FREE_INODE_LIST_SIZE; i++) {
             int inodeNumber = superBlock.getFreeInodeList()[i];
@@ -210,23 +226,32 @@ public class CromixFileSystem implements FileSystem {
         return stats;
     }
 
-    public void addDirectory(File directory) {
-        if (directory.isDirectory()) {
-            addDirectory(directory, directory, inodeManager.getInode(1));
+    public void append(File path, PrintStream out){
+        Inode rootInode = inodeManager.getInode(1);
+        if (path.isDirectory()) {
+            addDirectory(path, path, rootInode, out);
+        } else if (path.isFile()) {
+            addFile(path.getParentFile() != null ? path.getParentFile() : path.getAbsoluteFile().getParentFile(), rootInode, path, out);
         }
     }
 
-    public void addDirectory(File rootDirectory, File directory, Inode parentInode) {
+    public void addDirectory(File directory, PrintStream out) {
+        if (directory.isDirectory()) {
+            addDirectory(directory, directory, inodeManager.getInode(1), out);
+        }
+    }
+
+    protected void addDirectory(File rootDirectory, File directory, Inode parentInode, PrintStream out) {
         if (directory.isDirectory()) {
             // Process directories first
             Arrays.stream(Objects.requireNonNull(directory.listFiles(File::isDirectory)))
                     .sorted(Comparator.comparing(File::getName))
                     .forEach(dir -> {
                         if (dir.getName().length() > DirectoryEntry.NAME_LENGTH) {
-                            System.out.printf("Skipping directory : %s, name is too long\n", rootDirectory.toPath().relativize(dir.toPath()));
+                            out.printf("Skipping directory : %s, name is too long\n", rootDirectory.toPath().relativize(dir.toPath()));
                         } else {
-                            DirectoryEntry childEntry = findOrCreateDirectoryEntry(rootDirectory, parentInode, dir);
-                            addDirectory(rootDirectory, dir, inodeManager.getInode(childEntry.getInodeNumber()));
+                            DirectoryEntry childEntry = findOrCreateDirectoryEntry(rootDirectory, parentInode, dir, out);
+                            addDirectory(rootDirectory, dir, inodeManager.getInode(childEntry.getInodeNumber()), out);
                         }
                     });
 
@@ -235,30 +260,47 @@ public class CromixFileSystem implements FileSystem {
                     .sorted(Comparator.comparing(File::getName))
                     .forEach(file -> {
                         if (file.getName().length() > DirectoryEntry.NAME_LENGTH) {
-                            System.out.printf("Skipping file      : %s, name is too long\n", rootDirectory.toPath().relativize(file.toPath()));
+                            out.printf("Skipping file      : %s, name is too long\n", rootDirectory.toPath().relativize(file.toPath()));
                         } else {
-                            addFile(rootDirectory, parentInode, file);
+                            addFile(rootDirectory, parentInode, file, out);
                         }
                     });
         }
     }
 
-    protected DirectoryEntry addFile(File rootDirectory, Inode parentInode, File file) {
-        System.out.printf("Adding file        : %s\n", rootDirectory.toPath().relativize(file.toPath()));
-        // Find the first unused directory entry
-        DirectoryEntry entry = getNextAvailableDirectoryEntry(parentInode);
+    protected DirectoryEntry addFile(File rootDirectory, Inode parentInode, File file, PrintStream out) {
+        DirectoryEntry entry = findDirectoryEntry(parentInode, file.getName());
+        Inode entryInode;
+        if (entry != null) {
+            out.printf("Replacing file     : %s\n", rootDirectory.toPath().relativize(file.toPath()));
+            // Existing file
+            entryInode = inodeManager.getInode(entry.getInodeNumber());
+            entryInode.deleteFileBlocks(disk, freeBlockList);
+        } else {
+            out.printf("Adding file        : %s\n", rootDirectory.toPath().relativize(file.toPath()));
+            // Find the first unused directory entry
+            entry = getNextAvailableDirectoryEntry(parentInode);
+            entry.setStatus(DirectoryEntryStatus.ALLOCATED);
+            entry.setName(file.getName().toLowerCase());
 
-        Inode entryInode = inodeManager.getAvailableInode();
-        entryInode.setType(FILE);
-        entryInode.setLinks(1);
-        entryInode.setOwner(32767);
-        entryInode.setGroup(32767);
-        entryInode.setOwnerPermission(ACCESS_READ | ACCESS_WRITE | ACCESS_APPEND);
-        entryInode.setGroupPermission(ACCESS_READ);
-        entryInode.setOtherPermission(ACCESS_READ);
-        entryInode.setCreated(CromixTime.now());
-        entryInode.setModified(CromixTime.now());
-        entryInode.setAccessed(CromixTime.now());
+            entryInode = inodeManager.getAvailableInode();
+            entryInode.setType(FILE);
+            entryInode.setLinks(1);
+            entryInode.setOwner(32767);
+            entryInode.setGroup(32767);
+            entryInode.setOwnerPermission(ACCESS_READ | ACCESS_WRITE | ACCESS_APPEND);
+            entryInode.setGroupPermission(ACCESS_READ);
+            entryInode.setOtherPermission(ACCESS_READ);
+            entryInode.setCreated(CromixTime.now());
+            entryInode.setModified(CromixTime.now());
+            entryInode.setAccessed(CromixTime.now());
+
+            entry.setInodeNumber(entryInode.getNumber());
+
+            parentInode.incrementDirectoryEntryCount();
+            parentInode.setFileSize(getDirectoryExtent(parentInode));
+            inodeManager.flush(parentInode);
+        }
 
         try (FileInputStream in = new FileInputStream(file)) {
             int freeBlocks = freeBlockList.getFreeBlockCount();
@@ -284,37 +326,24 @@ public class CromixFileSystem implements FileSystem {
         }
         inodeManager.flush(entryInode);
 
-        entry.setStatus(DirectoryEntryStatus.ALLOCATED);
-        entry.setName(file.getName().toLowerCase());
-        entry.setInodeNumber(entryInode.getNumber());
         entry.flush(disk);
-
-        parentInode.incrementDirectoryEntryCount();
-        parentInode.setFileSize(getDirectoryExtent(parentInode));
-        inodeManager.flush(parentInode);
 
         superBlock.flush(disk);
 
         return entry;
     }
 
-    protected DirectoryEntry findOrCreateDirectoryEntry(File rootDirectory, Inode parentInode, File dir) {
+    protected DirectoryEntry findOrCreateDirectoryEntry(File rootDirectory, Inode parentInode, File dir, PrintStream out) {
         // Look for a directory entry with the same name
-        for (int i = 0; i < INDIRECT_1_BLOCK; i++) {
-            int blockNumber = parentInode.getBlockNumber(i);
-            if (blockNumber != 0) {
-                DirectoryBlock directoryBlock = DirectoryBlock.from(disk, blockNumber);
-                DirectoryEntry entry = directoryBlock.findEntry(dir.getName());
-                if (entry != null) {
-                    return entry;
-                }
-            }
+        DirectoryEntry entry = findDirectoryEntry(parentInode, dir.getName());
+        if (entry != null) {
+            return entry;
         }
 
-        System.out.printf("Adding directory   : %s\n", rootDirectory.toPath().relativize(dir.toPath()));
+        out.printf("Adding directory   : %s\n", rootDirectory.toPath().relativize(dir.toPath()));
 
         // Not found so find the first unused directory entry
-        DirectoryEntry entry = getNextAvailableDirectoryEntry(parentInode);
+        entry = getNextAvailableDirectoryEntry(parentInode);
 
         Inode entryInode = inodeManager.getAvailableInode();
         entryInode.setType(DIRECTORY);
@@ -340,6 +369,21 @@ public class CromixFileSystem implements FileSystem {
 
         superBlock.flush(disk);
         return entry;
+    }
+
+    protected DirectoryEntry findDirectoryEntry(Inode parentInode, String name) {
+        // Look for a directory entry with the same name
+        for (int i = 0; i < INDIRECT_1_BLOCK; i++) {
+            int blockNumber = parentInode.getBlockNumber(i);
+            if (blockNumber != 0) {
+                DirectoryBlock directoryBlock = DirectoryBlock.from(disk, blockNumber);
+                DirectoryEntry entry = directoryBlock.findEntry(name.toLowerCase());
+                if (entry != null) {
+                    return entry;
+                }
+            }
+        }
+        return null;
     }
 
     private DirectoryEntry getNextAvailableDirectoryEntry(Inode inode) {
@@ -391,7 +435,7 @@ public class CromixFileSystem implements FileSystem {
                         } else {
                             out.printf("%9d", entryInode.getType() == DIRECTORY ? entryInode.getDirectoryEntryCount() : entryInode.getFileSize());
                         }
-                        out.printf(" %s %2d %s %s %s %5d %5d %s %s%s%s%n",
+                        out.printf(" %s %2d %s %s %s %5d %5d %s %4d %s%s%s%n",
                                 entryInode.getTypeChar(),
                                 entryInode.getLinks(),
                                 getPermission(entryInode.getOwnerPermission()),
@@ -400,6 +444,7 @@ public class CromixFileSystem implements FileSystem {
                                 entryInode.getOwner(),
                                 entryInode.getGroup(),
                                 entryInode.getModified().toString(),
+                                entryInode.getNumber(),
                                 srcPath,
                                 FILE_SEP,
                                 entry.getName());

@@ -1,6 +1,7 @@
-package au.wildie.m68k.cromixfs.fs;
+package au.wildie.m68k.cromixfs.fs.cdos;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
+import au.wildie.m68k.cromixfs.fs.FileSystem;
 import lombok.Getter;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 

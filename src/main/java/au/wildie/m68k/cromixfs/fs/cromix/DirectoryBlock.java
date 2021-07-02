@@ -25,7 +25,7 @@ public class DirectoryBlock {
             byte[] data = disk.getBlock(blockNumber);
             DirectoryBlock directoryBlock = new DirectoryBlock(blockNumber, false);
             for (int i = 0; i < DIRECTORY_ENTRIES; i++) {
-                directoryBlock.entries[i] = DirectoryEntry.from(data, i * DIRECTORY_ENTRY_LENGTH, directoryBlock);
+                directoryBlock.entries[i] = DirectoryEntry.from(data, i, directoryBlock);
             }
             return directoryBlock;
         } catch (IOException e) {
@@ -37,7 +37,7 @@ public class DirectoryBlock {
         this.blockNumber = blockNumber;
         if (initialise) {
             for (int i = 0; i < DIRECTORY_ENTRIES; i++) {
-                entries[i] = new DirectoryEntry(NOT_ALLOCATED, this);
+                entries[i] = new DirectoryEntry(i, NOT_ALLOCATED, this);
             }
             dirty = true;
         }
