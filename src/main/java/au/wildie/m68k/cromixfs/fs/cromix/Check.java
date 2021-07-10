@@ -126,19 +126,19 @@ public class Check {
 
             if ((itable.flags & FLAG_BAD_INODE_NUMBER) != 0) {
                 if ((itable.flags & FLAG_ALLOCATED) != 0 || itable.cntlinks != 0 || itable.nlinks != 0) {
-                    out.printf("Inode %d, bad inode number in inode\n", inode.getNumber());
+                    out.printf("Inode %6d, bad inode number in inode\n", inode.getNumber());
                     errors++;
                 }
             }
             if ((itable.flags & FLAG_ALLOCATED) != 0) {
                 if (itable.cntlinks == 0) {
-                    out.printf("Inode %d, allocated inode with 0 links\n", inode.getNumber());
+                    out.printf("Inode %6d, allocated inode with 0 links\n", inode.getNumber());
                     errors++;
                 }
 
                 if ((itable.flags & FLAG_DIRECTORY) != 0) {
                     if ((itable.flags & FLAG_BAD_COUNT) != 0) {
-                        out.printf("Inode %d, bad directory entry count\n", inode.getNumber());
+                        out.printf("Inode %6d, bad directory entry count, expected %d, actual %d\n", inode.getNumber(), itable.entries, inode.getDirectoryEntryCount());
                         errors++;
                     }
                     if ((itable.flags & FLAG_MULTIPLE) != 0) {
@@ -146,7 +146,7 @@ public class Check {
                         errors++;
                     }
                     if ((itable.flags & FLAG_WRONG_PARENT) != 0) {
-                        out.printf("Inode %d, directory with wrong parent\n", inode.getNumber());
+                        out.printf("Inode %6d, directory with wrong parent\n", inode.getNumber());
                         errors++;
                     }
                 }
@@ -160,7 +160,7 @@ public class Check {
                     errors++;
                 }
             } else if (itable.cntlinks != 0) {
-                out.printf("Inode %d, unallocated inode with %d links\n", inode.getNumber(), itable.cntlinks);
+                out.printf("Inode %6d, unallocated inode with %d links\n", inode.getNumber(), itable.cntlinks);
                 errors++;
             }
         }
@@ -176,17 +176,17 @@ public class Check {
 
                 List<Integer> dataBlocks = inode.getDataBlocks(disk);
                 if (dataBlocks.size() > expectedBlocks) {
-                    out.printf("Inode %d, too many data blacks, counted %d, should be %d\n", inode.getNumber(), dataBlocks.size(), expectedBlocks);
+                    out.printf("Inode %6d, too many data blacks, counted %d, should be %d\n", inode.getNumber(), dataBlocks.size(), expectedBlocks);
                     errors++;
                 }
                 if (dataBlocks.size() < expectedBlocks) {
-                    out.printf("Inode %d, missing data blacks, counted %d, should be %d\n", inode.getNumber(), dataBlocks.size(), expectedBlocks);
+                    out.printf("Inode %6d, missing data blacks, counted %d, should be %d\n", inode.getNumber(), dataBlocks.size(), expectedBlocks);
                     errors++;
                 }
 
                 int countedUsedBlocks = inode.countUsedBlocks(disk);
                 if (countedUsedBlocks != inode.getUsedBlockCount()) {
-                    out.printf("Inode %d, used block count mismatch, counted %d, should be %d\n", inode.getNumber(), countedUsedBlocks, inode.getUsedBlockCount());
+                    out.printf("Inode %6d, used block count mismatch, counted %d, should be %d\n", inode.getNumber(), countedUsedBlocks, inode.getUsedBlockCount());
                     errors++;
                 }
             }
