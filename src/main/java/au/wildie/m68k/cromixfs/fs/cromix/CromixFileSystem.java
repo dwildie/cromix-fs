@@ -278,10 +278,6 @@ public class CromixFileSystem implements FileSystem {
             entryInode.deleteFileBlocks(disk, freeBlockList);
         } else {
             out.printf("Adding file        : %s\n", rootDirectory.toPath().relativize(file.toPath()));
-            // Find the first unused directory entry
-            entry = getNextAvailableDirectoryEntry(parentInode);
-            entry.setStatus(DirectoryEntryStatus.ALLOCATED);
-            entry.setName(file.getName().toLowerCase());
 
             entryInode = inodeManager.getAvailableInode();
             entryInode.setType(FILE);
@@ -295,7 +291,12 @@ public class CromixFileSystem implements FileSystem {
             entryInode.setModified(CromixTime.now());
             entryInode.setAccessed(CromixTime.now());
 
+            // Find the first unused directory entry
+            entry = getNextAvailableDirectoryEntry(parentInode);
+            entry.setStatus(DirectoryEntryStatus.ALLOCATED);
+            entry.setName(file.getName().toLowerCase());
             entry.setInodeNumber(entryInode.getNumber());
+            entry.flush(disk);
 
             parentInode.incrementDirectoryEntryCount();
             parentInode.setFileSize(getDirectoryExtent(parentInode));
