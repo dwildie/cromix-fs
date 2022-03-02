@@ -96,6 +96,7 @@ public class CromixFtar implements FileSystemOps {
                 }
                 out.printf("Disk error: %s\n", e.getMessage());
                 out.printf("Skipping block %d\n", disk.getCurrentBlockNumber());
+                continue;
             }
 
             if (buf[0] == 0 || buf[0] == (byte)0xE5) {
