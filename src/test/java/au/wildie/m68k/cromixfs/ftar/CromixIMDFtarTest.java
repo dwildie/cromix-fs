@@ -37,6 +37,19 @@ public class CromixIMDFtarTest extends CromemcoTest {
         list(CLDSDD_IMAGE_NEXT);
     }
 
+    @Test
+    public void listFile() throws IOException {
+        InputStream imdFile = new FileInputStream("/mnt/Damian/cloud/synced/retroComputing/dominique/DISK8.IMD");
+        assertThat(imdFile, notNullValue());
+
+        IMDImage imdImage = new IMDImage(IOUtils.toByteArray(imdFile), System.out);
+        assertThat(imdImage, notNullValue());
+
+        CromixFtar ftar = new CromixFtar(new FTarIMDDisk(imdImage, System.out));
+        ftar.list(System.out);
+        System.out.println("Done");
+    }
+
     public void list(String resourcePath) throws IOException {
         InputStream imdFile = this.getClass().getClassLoader().getResourceAsStream(resourcePath);
         assertThat(imdFile, notNullValue());

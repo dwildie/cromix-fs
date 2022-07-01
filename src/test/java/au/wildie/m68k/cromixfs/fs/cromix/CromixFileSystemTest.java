@@ -57,7 +57,7 @@ public class CromixFileSystemTest {
 
     @Test
     public void create() throws IOException {
-        DiskInterface disk = CromixIMDFloppyDisk.create("CLDSDD", System.out);
+        DiskInterface disk = CromixIMDFloppyDisk.createLarge(System.out);
         assertThat(disk, notNullValue());
 
         CromixFileSystem fs = CromixFileSystem.initialise(disk);
@@ -100,7 +100,7 @@ public class CromixFileSystemTest {
 
     @Test
     public void list() throws IOException {
-        File added = new File("/tmp/added1.imd");
+        File added = new File("/tmp/BLANKIBM_DSK.imd");
 //        File added = new File("/tmp/blank.imd");
 
         try (FileInputStream src = new FileInputStream(added)) {
@@ -122,7 +122,7 @@ public class CromixFileSystemTest {
 
     @Test
     public void append() throws IOException {
-        DiskInterface disk = CromixIMDFloppyDisk.create("CLDSDD", System.out);
+        DiskInterface disk = CromixIMDFloppyDisk.createLarge(System.out);
         assertThat(disk, notNullValue());
 
         CromixFileSystem fs = CromixFileSystem.initialise(disk);
@@ -161,9 +161,46 @@ public class CromixFileSystemTest {
     }
 
     @Test
+    public void check() throws IOException {
+        File imdFile = new File("/tmp/marcus/fred.imd");
+
+        try (FileInputStream src = new FileInputStream(imdFile)) {
+            IMDImage image = IMDImage.fromStream(src, System.out);
+            assertThat(image, notNullValue());
+
+            DiskInterface disk = new CromixIMDFloppyDisk(image, System.out);
+            assertThat(disk, notNullValue());
+            assertThat(CromixFileSystem.isValid(disk), is(true));
+
+            CromixFileSystem fs = new CromixFileSystem(disk);
+            assertThat(fs, notNullValue());
+
+            fs.check(System.out);
+            fs.list(System.out);
+        }
+    }
+
+    @Test
+    public void m() throws IOException {
+        DiskInterface disk = CromixIMDFloppyDisk.createLarge(System.out);
+        assertThat(disk, notNullValue());
+
+        CromixFileSystem fs = CromixFileSystem.initialise(disk);
+        assertThat(fs, notNullValue());
+        assertThat(CromixFileSystem.isValid(disk), is(true));
+
+        File file = new File("/home/dwildie/cromemcos/m/cromemco/code/disks/640 gen directories");
+        assertThat(file, notNullValue());
+        assertThat(file.exists(), is(true));
+        assertThat(file.isDirectory(), is(true));
+        fs.addDirectory(file, System.out);
+
+    }
+
+    @Test
     public void addDirectory() throws IOException {
 
-        DiskInterface disk = CromixIMDFloppyDisk.create("CLDSDD", System.out);
+        DiskInterface disk = CromixIMDFloppyDisk.createLarge(System.out);
         assertThat(disk, notNullValue());
 
         CromixFileSystem fs = CromixFileSystem.initialise(disk);

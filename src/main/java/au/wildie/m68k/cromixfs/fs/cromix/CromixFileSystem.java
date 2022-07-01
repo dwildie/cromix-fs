@@ -47,7 +47,10 @@ public class CromixFileSystem implements FileSystem {
     }
 
     public static CromixFileSystem initialise(DiskInterface disk) throws IOException {
-        SuperBlock superBlock = SuperBlock.initialise(disk.getFormatLabel());
+        SuperBlock superBlock = disk.getFormatLabel().startsWith("CL") ?
+                SuperBlock.initialiseLarge(disk.getFormatLabel())
+                :
+                SuperBlock.initialiseSmall(disk.getFormatLabel());
 
         // Create the free block list
         FreeBlockList freeBlockList = FreeBlockList.create(superBlock, disk);

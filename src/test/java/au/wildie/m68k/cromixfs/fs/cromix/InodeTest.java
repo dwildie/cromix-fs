@@ -16,10 +16,10 @@ public class InodeTest {
 
     @Test
     public void addBlock() {
-        DiskInterface disk = CromixIMDFloppyDisk.create("CLDSDD", System.out);
+        DiskInterface disk = CromixIMDFloppyDisk.createLarge(System.out);
         assertThat(disk, notNullValue());
 
-        SuperBlock superBlock = SuperBlock.initialise("CLDSDD");
+        SuperBlock superBlock = SuperBlock.initialiseLarge(disk.getFormatLabel());
         FreeBlockList freeBlockList = FreeBlockList.create(superBlock, disk);
 
         Inode inode = new Inode(1);

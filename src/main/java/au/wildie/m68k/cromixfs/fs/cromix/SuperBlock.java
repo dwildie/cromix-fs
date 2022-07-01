@@ -27,6 +27,7 @@ public class SuperBlock {
     private static final int SUPER_FREE_INODE_LIST_OFFSET   = 0x160;
 
     public static final int FREE_BLOCK_LIST_SIZE = 80;
+    public static final int FREE_BLOCK_LIST_SMALL_SIZE = 40;
     public static final int FREE_INODE_LIST_SIZE = 80;
 
     private int versionMinor;
@@ -47,7 +48,7 @@ public class SuperBlock {
 
     private boolean dirty;
 
-    public static SuperBlock initialise (String label) {
+    public static SuperBlock initialiseLarge (String label) {
         SuperBlock superBlock = new SuperBlock();
         superBlock.setVersionMajor(0x41);
         superBlock.setVersionMinor(0x61);
@@ -55,6 +56,28 @@ public class SuperBlock {
         superBlock.setFirstInodeBlock(20);
         superBlock.setInodeCount(508);
         superBlock.setBlockCount(2454);
+        superBlock.setLastModified(CromixTime.now());
+        superBlock.setBlockSize(512);
+        superBlock.setFreeBlockCount(0);
+        superBlock.freeBlockList = new int[FREE_BLOCK_LIST_SIZE];
+        superBlock.setFreeInodeCount(0);
+        superBlock.setFreeInodeList(new int[FREE_INODE_LIST_SIZE]);
+
+        superBlock.firstDataBlock = (superBlock.inodeCount + INODES_PER_BLOCK - 1) / INODES_PER_BLOCK + superBlock.firstInodeBlock;
+        superBlock.dataBlockCount = superBlock.blockCount - superBlock.firstDataBlock;
+
+        superBlock.dirty = true;
+        return superBlock;
+    }
+
+    public static SuperBlock initialiseSmall (String label) {
+        SuperBlock superBlock = new SuperBlock();
+        superBlock.setVersionMajor(0x41);
+        superBlock.setVersionMinor(0x61);
+        superBlock.setCromix("cromix");
+        superBlock.setFirstInodeBlock(20);
+        superBlock.setInodeCount(196);
+        superBlock.setBlockCount(794);
         superBlock.setLastModified(CromixTime.now());
         superBlock.setBlockSize(512);
         superBlock.setFreeBlockCount(0);

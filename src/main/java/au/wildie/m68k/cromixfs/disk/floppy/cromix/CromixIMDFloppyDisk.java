@@ -16,11 +16,20 @@ public class CromixIMDFloppyDisk extends IMDFloppyImage {
     private final CromixFloppyInfo info;
     private boolean uniform = false;
 
-    public static CromixIMDFloppyDisk create(String formatLabel, PrintStream out) {
+    public static CromixIMDFloppyDisk createLarge(PrintStream out) {
         IMDImage image = new IMDImage(new int[] {0, 3}, CromixFloppyInfo.LARGE_DOUBLE_DENSITY_DS);
         IMDSector zero = image.getSector(0, 0, 1);
         Arrays.fill(zero.getData(), (byte)0);
-        CromixFloppyInfo.setFormatLabel(formatLabel, zero.getData());
+        CromixFloppyInfo.setFormatLabel("CLDSDD", zero.getData());
+
+        return new CromixIMDFloppyDisk(image, out);
+    }
+
+    public static CromixIMDFloppyDisk createSmall(PrintStream out) {
+        IMDImage image = new IMDImage(new int[] {0, 3}, CromixFloppyInfo.SMALL_DOUBLE_DENSITY_DS);
+        IMDSector zero = image.getSector(0, 0, 1);
+        Arrays.fill(zero.getData(), (byte)0);
+        CromixFloppyInfo.setFormatLabel("CSDSDD", zero.getData());
 
         return new CromixIMDFloppyDisk(image, out);
     }

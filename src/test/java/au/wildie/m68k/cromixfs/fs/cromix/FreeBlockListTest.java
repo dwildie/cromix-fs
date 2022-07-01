@@ -16,7 +16,7 @@ public class FreeBlockListTest {
     @Test
     public void getAvailableBlock() {
 
-        SuperBlock superBlock = SuperBlock.initialise("CLDSDD");
+        SuperBlock superBlock = SuperBlock.initialiseLarge("CLDSDD");
 
         FreeBlockList freeBlockList = FreeBlockList.create(superBlock, null);
         int freeBlockCount = freeBlockList.getFreeBlockCount();
@@ -33,7 +33,7 @@ public class FreeBlockListTest {
 
     @Test
     public void returnBlock() {
-        SuperBlock superBlock = SuperBlock.initialise("CLDSDD");
+        SuperBlock superBlock = SuperBlock.initialiseLarge("CLDSDD");
 
         FreeBlockList freeBlockList = FreeBlockList.create(superBlock, null);
         int initialFreeBlockCount = freeBlockList.getFreeBlockCount();

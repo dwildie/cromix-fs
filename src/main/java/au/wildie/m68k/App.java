@@ -101,12 +101,16 @@ public class App {
                 ((CromixFileSystem)fs).persist(archive);
             }
             return;
-        } else if (args.length == 3 && args[0].equalsIgnoreCase("-m")) {
+        } else if (args.length == 3 && (args[0].equalsIgnoreCase("-ml") || args[0].equalsIgnoreCase("-ms"))) {
             if (!new File(args[2]).exists()) {
                 System.out.printf("Source path %s does not exist\n", args[1]);
                 return;
             }
-            CromixFileSystem fs = CromixFileSystem.initialise(CromixIMDFloppyDisk.create("CLDSDD", System.out));
+            CromixFileSystem fs = args[0].equalsIgnoreCase("-ml") ?
+                    CromixFileSystem.initialise(CromixIMDFloppyDisk.createLarge(System.out))
+                    :
+                    CromixFileSystem.initialise(CromixIMDFloppyDisk.createSmall(System.out));
+
             File file = new File(args[1]);
             if (file.exists()) {
                 file.delete();
@@ -114,7 +118,7 @@ public class App {
             if (file.getParentFile() != null && !file.getParentFile().exists()) {
                 file.getParentFile().mkdirs();
             }
-            fs.addDirectory(new File(args[2]), System.out);
+            fs.append(new File(args[2]), System.out);
 
             try (FileOutputStream archive = new FileOutputStream(file)) {
                 fs.persist(archive);
@@ -179,8 +183,11 @@ public class App {
         System.out.print("\nAppend file(s) to an existing mountable Cromix image:\n");
         System.out.printf("  java -jar %s -a file.imd path\n", jarName);
 
-        System.out.print("\nCreate a mountable Cromix image containing files from path:\n");
-        System.out.printf("  java -jar %s -m file.imd path\n", jarName);
+        System.out.print("\nCreate a large (8\") mountable Cromix image containing files from path:\n");
+        System.out.printf("  java -jar %s -ml file.imd path\n", jarName);
+
+        System.out.print("\nCreate a small (5.25\") mountable Cromix image containing files from path:\n");
+        System.out.printf("  java -jar %s -ms file.imd path\n", jarName);
 
         //        System.out.printf("\njava -jar %s -v file.imd | file.hfe path\n");
 
