@@ -26,7 +26,7 @@ public class CromixIMDFloppyDisk extends IMDFloppyImage {
     }
 
     public static CromixIMDFloppyDisk createSmall(PrintStream out) {
-        IMDImage image = new IMDImage(new int[] {0, 3}, CromixFloppyInfo.SMALL_DOUBLE_DENSITY_DS);
+        IMDImage image = new IMDImage(new int[] {2, 5}, CromixFloppyInfo.SMALL_DOUBLE_DENSITY_DS);
         IMDSector zero = image.getSector(0, 0, 1);
         Arrays.fill(zero.getData(), (byte)0);
         CromixFloppyInfo.setFormatLabel("CSDSDD", zero.getData());
