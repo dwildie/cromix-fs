@@ -19,7 +19,7 @@ import java.net.URISyntaxException;
 import java.util.Properties;
 
 /**
- * Hello world!
+ * cromix-fs
  *
  */
 public class App {
@@ -27,6 +27,7 @@ public class App {
         System.out.printf("%s version %s, Damian Wildie\n\n", getArtifactId(), getVersion());
 
         if (args.length == 2 && args[0].equalsIgnoreCase("-l")) {
+            // List files
             if (!new File(args[1]).exists()) {
                 System.out.printf("Cannot open image file %s\n", args[1]);
                 return;
@@ -34,6 +35,7 @@ public class App {
             get(args[1]).list(System.out);
             return;
         } else if (args.length == 2 && args[0].equalsIgnoreCase("-c")) {
+            // Check filesystem
             if (!new File(args[1]).exists()) {
                 System.out.printf("Cannot open image file %s\n", args[1]);
                 return;
@@ -44,6 +46,7 @@ public class App {
             }
             return;
         } else if (args.length == 2 && args[0].equalsIgnoreCase("-di")) {
+            // Dump inodes
             if (!new File(args[1]).exists()) {
                 System.out.printf("Cannot open image file %s\n", args[1]);
                 return;
@@ -54,6 +57,7 @@ public class App {
             }
             return;
         } else if (args.length == 3 && args[0].equalsIgnoreCase("-x")) {
+            // Extract files
             if (!new File(args[1]).exists()) {
                 System.out.printf("Cannot open image file %s\n", args[1]);
                 return;
@@ -65,6 +69,7 @@ public class App {
             get(args[1]).extract(args[2], System.out);
             return;
         } else if (args.length == 3 && args[0].equalsIgnoreCase("-f")) {
+            // Create new ftar image
             if (!new File(args[2]).exists()) {
                 System.out.printf("Source path %s does not exist\n", args[1]);
                 return;
@@ -82,13 +87,14 @@ public class App {
             }
             return;
         } else if (args.length == 3 && args[0].equalsIgnoreCase("-a")) {
+            // Append files to existing Cromix file system
             if (!new File(args[1]).exists()) {
                 System.out.printf("Cannot open image file %s\n", args[1]);
                 return;
             }
             File path = new File(args[2]);
             if (!path.exists()) {
-                System.out.printf("Source path %s does not exist\n", args[1]);
+                System.out.printf("Source path %s does not exist\n", args[2]);
                 return;
             }
             FileSystemOps fs = get(args[1]);
@@ -96,13 +102,14 @@ public class App {
                 System.out.println("Not a Cromix filesystem");
                 return;
             }
+
             ((CromixFileSystem)fs).append(path, System.out);
             try (FileOutputStream archive = new FileOutputStream(args[1])) {
                 ((CromixFileSystem)fs).persist(archive);
             }
             return;
-        } else if (args.length == 3 && (args[0].equalsIgnoreCase("-ml") || args[0].equalsIgnoreCase("-ms"))) {
-            if (!new File(args[2]).exists()) {
+        } else if ((args.length == 2 || args.length == 3) && (args[0].equalsIgnoreCase("-ml") || args[0].equalsIgnoreCase("-ms"))) {
+            if (args.length == 3 && !new File(args[2]).exists()) {
                 System.out.printf("Source path %s does not exist\n", args[1]);
                 return;
             }
@@ -111,6 +118,10 @@ public class App {
                     :
                     CromixFileSystem.initialise(CromixIMDFloppyDisk.createSmall(System.out));
 
+            if (args.length == 3) {
+                fs.append(new File(args[2]), System.out);
+            }
+
             File file = new File(args[1]);
             if (file.exists()) {
                 file.delete();
@@ -118,7 +129,6 @@ public class App {
             if (file.getParentFile() != null && !file.getParentFile().exists()) {
                 file.getParentFile().mkdirs();
             }
-            fs.append(new File(args[2]), System.out);
 
             try (FileOutputStream archive = new FileOutputStream(file)) {
                 fs.persist(archive);

@@ -118,9 +118,11 @@ public class CromixFileSystem implements FileSystem {
             out.println("Completed dcheck\n");
         }
 
+        Integer iblockErrors = null;
         if (dcheckErrors == 0) {
             out.println("Executing inode block check");
-            if (check.fileCheck(out) == 0) {
+            iblockErrors = check.fileCheck(out);
+            if (iblockErrors == 0) {
                 out.println("No inode block errors\n");
             } else {
                 out.println("Completed inode block check\n");
@@ -142,7 +144,7 @@ public class CromixFileSystem implements FileSystem {
         inodeStats.print(out);
         blockStats.print(out);
 
-        return new CromixFileSystemStats(blockStats, inodeStats);
+        return new CromixFileSystemStats(dcheckErrors, iblockErrors, blockStats, inodeStats);
     }
 
     protected BlockStats checkBlocks() {
@@ -213,7 +215,7 @@ public class CromixFileSystem implements FileSystem {
 
         freeBlockList.visit(blockUsage::setOnFreeList);
 
-        blockUsage.getOrphanedBlocks().forEach(item -> System.out.printf("Orphaned block number %d\n", item.getNumber()));
+        blockUsage.getOrphanedBlocks().forEach(item -> System.out.printf("Orphaned block number 0x%06x\n", item.getNumber()));
 
         BlockStats stats = new BlockStats(superBlock);
         stats.setFileBlocks(blockUsage.getFileBlockCount());
@@ -425,7 +427,7 @@ public class CromixFileSystem implements FileSystem {
         return extent;
     }
 
-    private void readDirectory(String srcPath, Inode inode, DumpMode mode, String trgPath, PrintStream out) throws IOException {
+    private void readDirectory(String srcPath, Inode inode, DumpMode mode, String trgPath, PrintStream listingOut) throws IOException {
         for (int i = 0; i < INDIRECT_1_BLOCK; i++) {
             int blockNumber = inode.getBlockNumber(i);
             if (blockNumber != 0) {
@@ -435,11 +437,11 @@ public class CromixFileSystem implements FileSystem {
                         Inode entryInode = inodeManager.getInode(entry.getInodeNumber());
 
                         if (entryInode.getType() == CHARACTER_DEVICE || entryInode.getType() == BLOCK_DEVICE) {
-                            out.printf("  %3d,%-3d", entryInode.getMajor(), entryInode.getMinor());
+                            listingOut.printf("  %3d,%-3d", entryInode.getMajor(), entryInode.getMinor());
                         } else {
-                            out.printf("%9d", entryInode.getType() == DIRECTORY ? entryInode.getDirectoryEntryCount() : entryInode.getFileSize());
+                            listingOut.printf("%9d", entryInode.getType() == DIRECTORY ? entryInode.getDirectoryEntryCount() : entryInode.getFileSize());
                         }
-                        out.printf(" %s %2d %s %s %s %5d %5d %s %4d %s%s%s%n",
+                        listingOut.printf(" %s %2d %s %s %s %5d %5d %s %4d %s%s%s%n",
                                 entryInode.getTypeChar(),
                                 entryInode.getLinks(),
                                 getPermission(entryInode.getOwnerPermission()),
@@ -459,7 +461,7 @@ public class CromixFileSystem implements FileSystem {
                                 dir = new File(trgPath + FILE_SEP + entry.getName());
                                 dir.mkdirs();
                             }
-                            readDirectory(srcPath + FILE_SEP + entry.getName(), entryInode, mode, mode == EXTRACT ? (trgPath + FILE_SEP + entry.getName()) : (srcPath + FILE_SEP + entry.getName()), out);
+                            readDirectory(srcPath + FILE_SEP + entry.getName(), entryInode, mode, mode == EXTRACT ? (trgPath + FILE_SEP + entry.getName()) : (srcPath + FILE_SEP + entry.getName()), listingOut);
                             if (mode == EXTRACT) {
                                 try {
                                     dir.setLastModified(entryInode.getModified().toDate().getTime());
@@ -469,62 +471,63 @@ public class CromixFileSystem implements FileSystem {
                             }
                         }
                         if (entryInode.getType() == FILE && mode == EXTRACT) {
-                            extractFile(entryInode, entryInode.getFileSize(), entryInode.getModified(), trgPath + FILE_SEP + entry.getName());
+                            extractFile(entryInode, entryInode.getFileSize(), entryInode.getModified(), trgPath + FILE_SEP + entry.getName(), listingOut);
                         }
                     }
                 }
             }
         }
-        out.print("");
+        listingOut.print("");
     }
 
-    private void extractFile(Inode inode, int size, CromixTime modified, String path) throws IOException {
+    private void extractFile(Inode inode, int size, CromixTime modified, String path, PrintStream listingOut) throws IOException {
         int remainingBytes = size;
         File file = new File(path);
 
-        try (OutputStream out = new FileOutputStream(file)) {
+        try (OutputStream fileOutputStream = new FileOutputStream(file)) {
             // Read first 16 data blocks
             for (int i = 0; i < 0x10 && remainingBytes > 0; i++) {
                 int blockNumber = inode.getBlockNumber(i);
                 if (blockNumber != 0) {
+                    listingOut.format(" 0x%06x", blockNumber);
                     byte[] data = getBlock(blockNumber);
                     int bytes = Math.min(remainingBytes, data.length);
-                    out.write(data, 0, bytes);
+                    fileOutputStream.write(data, 0, bytes);
                     remainingBytes -= bytes;
                 }
             }
 
             if (remainingBytes == 0) {
-                out.flush();
+                fileOutputStream.flush();
                 return;
             }
 
             // 17th pointer
             int blockNumber = inode.getBlockNumber(INDIRECT_1_BLOCK);
             if (blockNumber != 0) {
-                remainingBytes = extractPointerBlock(blockNumber, out, remainingBytes);
+                remainingBytes = extractPointerBlock(blockNumber, fileOutputStream, remainingBytes, listingOut);
             }
 
             if (remainingBytes == 0) {
-                out.flush();
+                fileOutputStream.flush();
                 return;
             }
 
             // 18th pointer
             blockNumber = inode.getBlockNumber(INDIRECT_2_BLOCK);
             if (blockNumber != 0) {
-                remainingBytes = extractPointerPointerBlock(blockNumber, out, remainingBytes);
+                remainingBytes = extractPointerPointerBlock(blockNumber, fileOutputStream, remainingBytes, listingOut);
             }
 
             if (remainingBytes == 0) {
-                out.flush();
+                fileOutputStream.flush();
                 return;
             }
 
             // 19th pointer
             blockNumber = inode.getBlockNumber(INDIRECT_3_BLOCK);
             if (blockNumber != 0) {
-                remainingBytes = extractPointerPointerPointerBlock(blockNumber, out, remainingBytes);
+                remainingBytes = extractPointerPointerPointerBlock(blockNumber, fileOutputStream, remainingBytes, listingOut);
             }
 
             if (remainingBytes != 0) {
@@ -532,11 +535,11 @@ public class CromixFileSystem implements FileSystem {
                 System.out.println(error);
                 //throw new RuntimeException(error);
             }
-
-            out.flush();
+            fileOutputStream.flush();
         } catch (ImageException e) {
             System.out.printf("Error extracting file %s, only %d bytes of %d bytes extracted. %s\n", path, size - remainingBytes, size, e.getMessage());
         } finally {
+            listingOut.print("\n");
             try {
                 if (modified.toDate().before(new Date())) {
                     try {
@@ -563,32 +566,38 @@ public class CromixFileSystem implements FileSystem {
         }
     }
 
-    private int extractPointerPointerPointerBlock(int ptrPtrPtrBlockNumber, OutputStream out, int remainingBytes) throws IOException {
+    private int extractPointerPointerPointerBlock(int ptrPtrPtrBlockNumber, OutputStream out, int remainingBytes, PrintStream listingOut) throws IOException {
+        listingOut.format(" 0x%06x", ptrPtrPtrBlockNumber);
         byte[] block = getBlock(ptrPtrPtrBlockNumber);
         for (int i = 0; i < BLOCK_POINTER_COUNT && remainingBytes > 0; i++) {
             int ptrPtrBlockNumber = readDWord(block, i * 4);
             if (ptrPtrBlockNumber != 0) {
-                remainingBytes = extractPointerPointerBlock(ptrPtrBlockNumber, out, remainingBytes);
+                remainingBytes = extractPointerPointerBlock(ptrPtrBlockNumber, out, remainingBytes, listingOut);
             }
         }
         return remainingBytes;
     }
 
-    private int extractPointerPointerBlock(int ptrPtrBlockNumber, OutputStream out, int remainingBytes) throws IOException {
+    private int extractPointerPointerBlock(int ptrPtrBlockNumber, OutputStream out, int remainingBytes, PrintStream listingOut) throws IOException {
+        listingOut.format(" 0x%06x", ptrPtrBlockNumber);
         byte[] block = getBlock(ptrPtrBlockNumber);
         for (int i = 0; i < BLOCK_POINTER_COUNT && remainingBytes > 0; i++) {
             int ptrBlockNumber = readDWord(block, i * 4);
             if (ptrBlockNumber != 0) {
-                remainingBytes = extractPointerBlock(ptrBlockNumber, out, remainingBytes);
+                remainingBytes = extractPointerBlock(ptrBlockNumber, out, remainingBytes, listingOut);
             }
         }
         return remainingBytes;
     }
 
-    private int extractPointerBlock(int ptrBlockNumber, OutputStream out, int remainingBytes) throws IOException {
+    private int extractPointerBlock(int ptrBlockNumber, OutputStream out, int remainingBytes, PrintStream listingOut) throws IOException {
+        listingOut.format(" 0x%06x", ptrBlockNumber);
         byte[] block = getBlock(ptrBlockNumber);
         for (int i = 0; i < BLOCK_POINTER_COUNT && remainingBytes > 0; i++) {
             int blockNumber = readDWord(block, i * 4);
+            if (blockNumber != 0) {
+                listingOut.format(" 0x%06x", blockNumber);
+            }
             byte[] data = blockNumber == 0 ? new byte[512] : getBlock(blockNumber);
             int bytes = Math.min(remainingBytes, data.length);
             out.write(data, 0, bytes);

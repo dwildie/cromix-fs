@@ -190,7 +190,7 @@ public class IMDImage extends DiskImage {
                     }
                     sector.setValid(false);
                 } else {
-                    out.printf("Unexpected sector encoding: cylinder %d, head %d, sector %d, encoding%d\n", track.getCylinder(), track.getHead(), sector.getNumber(), sector.getEncoding());
+                    out.printf("Unexpected sector encoding: cylinder %d, head %d, sector %d, encoding %d\n", track.getCylinder(), track.getHead(), sector.getNumber(), sector.getEncoding());
                     sector.setValid(false);
                 }
                 track.getSectors().add(sector);
@@ -252,7 +252,16 @@ public class IMDImage extends DiskImage {
                 track.getSectors().forEach(sector -> {
                     try {
                         out.write(sector.getEncoding());
-                        out.write(sector.getData());
+                        if (sector.getEncoding() == SECTOR_ENCODING_NORMAL
+                         || sector.getEncoding() == SECTOR_ENCODING_DELETED
+                         || sector.getEncoding() == SECTOR_ENCODING_DELETED_ERROR
+                         || sector.getEncoding() == SECTOR_ENCODING_ERROR) {
+                            // Uncompressed, write all bytes
+                            out.write(sector.getData());
+                        } else {
+                            // Compressed, write one byte, all other bytes are the same as the first byte
+                            out.write(sector.getData()[0]);
+                        }
                     } catch (IOException e) {
                         throw new ImageException(CODE_ERROR, "Can't write sector data");
                     }

@@ -60,6 +60,11 @@ public class CromixStDisk implements DiskInterface {
         new CromixFileSystem(this).extract(path, out);
     }
 
+
+    public void check(PrintStream out) throws IOException {
+        new CromixFileSystem(this).check(out);
+    }
+
     @Override
     public byte[] getSuperBlock() {
         return getBlock(1);
@@ -72,6 +77,9 @@ public class CromixStDisk implements DiskInterface {
 
     @Override
     public byte[] getBlock(int block) {
+        if (block == 0x0095) {
+            System.out.print("stop");
+        }
         int c = getCylinderForBlock(0, block);
         int h = getHeadForBlock(block);
         int s = getSectorForBlock(block);
