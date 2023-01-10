@@ -121,7 +121,7 @@ public class FileSystems {
         throw new VFDFloppyException(String.format("Unrecognised disk, format label: \"%s\"", formatLabel));
     }
 
-    public static FileSystem getSTFileSystem(String fileName, PrintStream out) throws STDiskException, IOException {
-        return new CromixFileSystem(new CromixStDisk(fileName));
+    public static FileSystem getSTFileSystem(String fileName, Integer partitionIndex, PrintStream out) throws STDiskException, IOException {
+        return new CromixFileSystem(new CromixStDisk(fileName, partitionIndex));
     }
 }

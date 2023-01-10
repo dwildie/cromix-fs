@@ -46,6 +46,16 @@ public class AppTest
     }
 
     @Test
+    public void testListPartition() throws InvalidVFDImageException, STDiskException, IOException {
+        App.main(new String[]{"-l", "-p", "7", "/home/dwildie/mfm/20220705.D45.C1536.H16.master.img"});
+    }
+
+    @Test
+    public void testCheckPartition() throws InvalidVFDImageException, STDiskException, IOException {
+        App.main(new String[]{"-c", "-p", "0", "/home/dwildie/mfm/20220705.D45.C1536.H16.master.img"});
+    }
+
+    @Test
     public void testListSmall() throws InvalidVFDImageException, STDiskException, IOException {
         App.main(new String[]{"-l", "/tmp/5s.IMD"});
     }

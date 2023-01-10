@@ -2,8 +2,11 @@ package au.wildie.m68k.cromixfs.disk.st;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
 import au.wildie.m68k.cromixfs.fs.cromix.CromixFileSystem;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.*;
+import java.util.Optional;
 
 public class CromixStDisk implements DiskInterface {
     private static final int SECTOR_SIZE = 512; // Disks are always 512 byte sectors
@@ -11,7 +14,14 @@ public class CromixStDisk implements DiskInterface {
     private final byte[][][][] media;
     private final STDCDiskInfo info;
 
-    public CromixStDisk(String fileName) throws STDiskException {
+    @Getter
+    private final STDCPartitionTable partitionTable;
+
+//    @Setter
+    @Getter
+    private int currentPartition = 0;
+
+    public CromixStDisk(String fileName, Integer partitionIndex) throws STDiskException {
         byte[] sector = new byte[SECTOR_SIZE];
 
         try (InputStream in = new FileInputStream(fileName)) {
@@ -48,8 +58,10 @@ public class CromixStDisk implements DiskInterface {
         } catch (IOException e) {
             throw new STDiskException(String.format("Error reading disk image file \"%s\"\n", fileName), e);
         }
-    }
 
+        partitionTable = new STDCPartitionTable(info, media);
+        currentPartition = Optional.ofNullable(partitionIndex).orElse(0);
+    }
 
     public void list(PrintStream out) throws IOException {
         new CromixFileSystem(this).list(out);
@@ -59,7 +71,6 @@ public class CromixStDisk implements DiskInterface {
         System.out.printf("Extracting to directory: %s\n", path);
         new CromixFileSystem(this).extract(path, out);
     }
-
 
     public void check(PrintStream out) throws IOException {
         new CromixFileSystem(this).check(out);
@@ -77,10 +88,7 @@ public class CromixStDisk implements DiskInterface {
 
     @Override
     public byte[] getBlock(int block) {
-        if (block == 0x0095) {
-            System.out.print("stop");
-        }
-        int c = getCylinderForBlock(0, block);
+        int c = getCylinderForBlock(this.currentPartition, block);
         int h = getHeadForBlock(block);
         int s = getSectorForBlock(block);
         return media[c][h][s];
@@ -121,7 +129,7 @@ public class CromixStDisk implements DiskInterface {
     }
 
     private int getStartingCylinder(int unit) {
-        return 1; // Changes when partition table is present
+        return partitionTable.getStartCylinder(unit).orElse(1);
     }
 
     private int getHeadForBlock(int block) {

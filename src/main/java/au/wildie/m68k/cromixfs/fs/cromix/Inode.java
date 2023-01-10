@@ -1,19 +1,18 @@
 package au.wildie.m68k.cromixfs.fs.cromix;
 
-import static au.wildie.m68k.cromixfs.fs.CromixTime.TIME_SIZE;
-import static au.wildie.m68k.cromixfs.fs.cromix.InodeType.*;
-import static au.wildie.m68k.cromixfs.fs.cromix.PointerBlock.BLOCK_POINTER_COUNT;
-import static au.wildie.m68k.cromixfs.utils.BinUtils.*;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
 import au.wildie.m68k.cromixfs.fs.CromixTime;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import static au.wildie.m68k.cromixfs.fs.CromixTime.TIME_SIZE;
+import static au.wildie.m68k.cromixfs.fs.cromix.InodeType.*;
+import static au.wildie.m68k.cromixfs.fs.cromix.PointerBlock.BLOCK_POINTER_COUNT;
+import static au.wildie.m68k.cromixfs.utils.BinUtils.*;
 
 @Getter
 @Setter

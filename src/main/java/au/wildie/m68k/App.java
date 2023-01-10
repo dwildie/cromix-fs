@@ -34,6 +34,15 @@ public class App {
             }
             get(args[1]).list(System.out);
             return;
+        } else if (args.length == 4 && args[0].equalsIgnoreCase("-l") && args[1].equalsIgnoreCase("-p")) {
+            // List partition files
+            if (!new File(args[3]).exists()) {
+                System.out.printf("Cannot open image file %s\n", args[3]);
+                return;
+            }
+            int partitionIndex = Integer.parseInt(args[2]);
+            get(args[3], partitionIndex).list(System.out);
+            return;
         } else if (args.length == 2 && args[0].equalsIgnoreCase("-c")) {
             // Check filesystem
             if (!new File(args[1]).exists()) {
@@ -41,6 +50,18 @@ public class App {
                 return;
             }
             FileSystemOps fs = get(args[1]);
+            if (fs instanceof CromixFileSystem) {
+                ((CromixFileSystem)fs).check(System.out);
+            }
+            return;
+        } else if (args.length == 4 && args[0].equalsIgnoreCase("-c") && args[1].equalsIgnoreCase("-p")) {
+            // Check filesystem
+            if (!new File(args[3]).exists()) {
+                System.out.printf("Cannot open image file %s\n", args[3]);
+                return;
+            }
+            int partitionIndex = Integer.parseInt(args[2]);
+            FileSystemOps fs = get(args[3], partitionIndex);
             if (fs instanceof CromixFileSystem) {
                 ((CromixFileSystem)fs).check(System.out);
             }
@@ -67,6 +88,19 @@ public class App {
                 target.mkdirs();
             }
             get(args[1]).extract(args[2], System.out);
+            return;
+        } else if (args.length == 5 && args[0].equalsIgnoreCase("-x") && args[1].equalsIgnoreCase("-p")) {
+            // Extract files
+            if (!new File(args[3]).exists()) {
+                System.out.printf("Cannot open image file %s\n", args[3]);
+                return;
+            }
+            File target = new File(args[4]);
+            if (!target.exists()) {
+                target.mkdirs();
+            }
+            int partitionIndex = Integer.parseInt(args[2]);
+            get(args[3], partitionIndex).extract(args[4], System.out);
             return;
         } else if (args.length == 3 && args[0].equalsIgnoreCase("-f")) {
             // Create new ftar image
@@ -157,6 +191,10 @@ public class App {
     }
 
     private static FileSystemOps get(String filename) throws IOException, InvalidVFDImageException, STDiskException {
+        return get(filename, null);
+    }
+
+    private static FileSystemOps get(String filename, Integer partitionIndex) throws IOException, InvalidVFDImageException, STDiskException {
         FileSystemOps fs;
         if (filename.toLowerCase().trim().endsWith(".imd")) {
             fs = FileSystems.getIMDFloppyFileSystem(filename, System.out);
@@ -165,7 +203,7 @@ public class App {
         } else if (filename.toLowerCase().trim().endsWith(".hfe")) {
             fs = FileSystems.getHFEFloppyFileSystem(filename, System.out);
         } else {
-            fs = FileSystems.getSTFileSystem(filename, System.out);
+            fs = FileSystems.getSTFileSystem(filename, partitionIndex, System.out);
         }
         return fs;
     }
@@ -176,16 +214,16 @@ public class App {
         String jarName = getJarName();
 
         System.out.print("\nCheck a cromix image:\n");
-        System.out.printf("  java -jar %s -c file.imd\n", jarName);
+        System.out.printf("  java -jar %s -c [-p partitionIndex] file.imd|file.img\n", jarName);
 
         System.out.print("\nDump cromix inodes:\n");
         System.out.printf("  java -jar %s -di file.imd\n", jarName);
 
         System.out.print("\nList files in an image:\n");
-        System.out.printf("  java -jar %s -l file.imd\n", jarName);
+        System.out.printf("  java -jar %s -l [-p partitionIndex] file.imd|file.img\n", jarName);
 
         System.out.print("\nExtract files from an image to path:\n");
-        System.out.printf("  java -jar %s -x file.imd path\n", jarName);
+        System.out.printf("  java -jar %s -x [-p partitionIndex] file.imd|file.img path\n", jarName);
 
         System.out.print("\nCreate a new Cromix ftar image containing files from path:\n");
         System.out.printf("  java -jar %s -f file.imd path\n", jarName);
