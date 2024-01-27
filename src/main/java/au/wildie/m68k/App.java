@@ -1,11 +1,13 @@
 package au.wildie.m68k;
 
+import au.wildie.m68k.cromixfs.disk.DiskInterface;
 import au.wildie.m68k.cromixfs.disk.floppy.FileScan;
 import au.wildie.m68k.cromixfs.disk.floppy.cromix.CromixIMDFloppyDisk;
 import au.wildie.m68k.cromixfs.disk.st.STDiskException;
 import au.wildie.m68k.cromixfs.disk.vfd.InvalidVFDImageException;
 import au.wildie.m68k.cromixfs.disk.vfd.VFDConverter;
 import au.wildie.m68k.cromixfs.disk.vfd.VFDErrorsException;
+import au.wildie.m68k.cromixfs.fs.FileSystem;
 import au.wildie.m68k.cromixfs.fs.FileSystemOps;
 import au.wildie.m68k.cromixfs.fs.FileSystems;
 import au.wildie.m68k.cromixfs.fs.cromix.CromixFileSystem;
@@ -76,6 +78,22 @@ public class App {
             if (fs instanceof CromixFileSystem) {
                 ((CromixFileSystem)fs).dumpInodes(System.out);
             }
+            return;
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("-raw")) {
+            // Convert to raw image
+            if (!new File(args[1]).exists()) {
+                System.out.printf("Cannot open image file %s\n", args[1]);
+                return;
+            }
+            File raw = new File(args[2]);
+            if (raw.exists()) {
+                if (!raw.delete()) {
+                    System.out.printf("Cannot delete output file %s\n", args[2]);
+                    return;
+                }
+            }
+            FileSystemOps fs = get(args[1]);
+            ((DiskInterface)fs.getDisk()).writeImage(raw, true);
             return;
         } else if (args.length == 3 && args[0].equalsIgnoreCase("-x")) {
             // Extract files
@@ -241,6 +259,9 @@ public class App {
 
         System.out.print("\nScan path and display image information:\n");
         System.out.printf("  java -jar %s -s path\n", jarName);
+
+        System.out.print("\nConvert IMD image to a raw image:\n");
+        System.out.printf("  java -jar %s -raw file.imd file.img\n", jarName);
     }
 
     private static String getJarName() {
