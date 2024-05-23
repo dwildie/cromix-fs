@@ -8,7 +8,12 @@ import au.wildie.m68k.cromixfs.fs.FileSystem;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -18,8 +23,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static au.wildie.m68k.cromixfs.fs.DumpMode.EXTRACT;
 import static au.wildie.m68k.cromixfs.fs.DumpMode.LIST;
-import static au.wildie.m68k.cromixfs.fs.cromix.Inode.*;
-import static au.wildie.m68k.cromixfs.fs.cromix.InodeType.*;
+import static au.wildie.m68k.cromixfs.fs.cromix.Inode.ACCESS_APPEND;
+import static au.wildie.m68k.cromixfs.fs.cromix.Inode.ACCESS_READ;
+import static au.wildie.m68k.cromixfs.fs.cromix.Inode.ACCESS_WRITE;
+import static au.wildie.m68k.cromixfs.fs.cromix.Inode.INDIRECT_1_BLOCK;
+import static au.wildie.m68k.cromixfs.fs.cromix.Inode.INDIRECT_2_BLOCK;
+import static au.wildie.m68k.cromixfs.fs.cromix.Inode.INDIRECT_3_BLOCK;
+import static au.wildie.m68k.cromixfs.fs.cromix.InodeType.BLOCK_DEVICE;
+import static au.wildie.m68k.cromixfs.fs.cromix.InodeType.CHARACTER_DEVICE;
+import static au.wildie.m68k.cromixfs.fs.cromix.InodeType.DIRECTORY;
+import static au.wildie.m68k.cromixfs.fs.cromix.InodeType.FILE;
+import static au.wildie.m68k.cromixfs.fs.cromix.InodeType.SHARED_TEXT;
+import static au.wildie.m68k.cromixfs.fs.cromix.InodeType.UNKNOWN;
+import static au.wildie.m68k.cromixfs.fs.cromix.InodeType.UNUSED;
 import static au.wildie.m68k.cromixfs.fs.cromix.PointerBlock.BLOCK_POINTER_COUNT;
 import static au.wildie.m68k.cromixfs.fs.cromix.SuperBlock.FREE_INODE_LIST_SIZE;
 import static au.wildie.m68k.cromixfs.utils.BinUtils.readDWord;
@@ -88,6 +104,11 @@ public class CromixFileSystem implements FileSystem {
     @Override
     public String getName() {
         return "Cromix filesystem";
+    }
+
+    @Override
+    public CromixFileSystemTreeDirectoryNode tree() {
+        return readDirectoryTree("", inodeManager.getInode( 1));
     }
 
     @Override
@@ -425,6 +446,28 @@ public class CromixFileSystem implements FileSystem {
             }
         }
         return extent;
+    }
+
+    private CromixFileSystemTreeDirectoryNode readDirectoryTree(String name, Inode inode) {
+        CromixFileSystemTreeDirectoryNode treeNode = new CromixFileSystemTreeDirectoryNode(name, inode);
+
+        for (int i = 0; i < INDIRECT_1_BLOCK; i++) {
+            int blockNumber = inode.getBlockNumber(i);
+            if (blockNumber != 0) {
+                DirectoryBlock directoryBlock = DirectoryBlock.from(disk, blockNumber);
+                for (DirectoryEntry entry : directoryBlock.getEntries()) {
+                    if (entry.getStatus() == DirectoryEntryStatus.ALLOCATED) {
+                        Inode entryInode = inodeManager.getInode(entry.getInodeNumber());
+                        if (entryInode.getType() == DIRECTORY) {
+                            treeNode.add(readDirectoryTree(entry.getName(), entryInode));
+                        } else {
+                            treeNode.add(new CromixFileSystemTreeFileNode(entry.getName(), entryInode));
+                        }
+                    }
+                }
+            }
+        }
+        return treeNode;
     }
 
     private void readDirectory(String srcPath, Inode inode, DumpMode mode, String trgPath, PrintStream listingOut) throws IOException {

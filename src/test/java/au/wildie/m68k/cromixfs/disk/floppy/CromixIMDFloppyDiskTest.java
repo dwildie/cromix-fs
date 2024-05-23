@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class CromixIMDFloppyDiskTest {
@@ -35,9 +36,13 @@ public class CromixIMDFloppyDiskTest {
 
     @Test
     public void writeImage() throws IOException {
-        InputStream src = getClass().getClassLoader().getResourceAsStream(CLDSDD_IMAGE);
+//        String srcPath = CLDSDD_IMAGE;
+//        InputStream src = getClass().getClassLoader().getResourceAsStream(srcPath);
+//        File out = Paths.get(System.getProperty("java.io.tmpdir"), String.format("%s.%s", FilenameUtils.removeExtension(srcPath), "img")).toFile();
+        String srcPath = "/tmp/657C168.IMD";
+        InputStream src = Files.newInputStream(new File(srcPath).toPath());
+        File out = Paths.get(String.format("%s.%s", FilenameUtils.removeExtension(srcPath), "img")).toFile();
         FileSystem fs = (FileSystem)FileSystems.getIMDFloppyFileSystem(src, System.out);
-        File out = Paths.get(System.getProperty("java.io.tmpdir"), String.format("%s.%s", FilenameUtils.removeExtension(CLDSDD_IMAGE), "img")).toFile();
         ((DiskInterface)fs.getDisk()).writeImage(out, true);
         System.out.println("done");
     }

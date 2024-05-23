@@ -3,9 +3,10 @@ package au.wildie.m68k.cromixfs.disk.st;
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
 import au.wildie.m68k.cromixfs.fs.cromix.CromixFileSystem;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 public class CromixStDisk implements DiskInterface {
@@ -22,9 +23,17 @@ public class CromixStDisk implements DiskInterface {
     private int currentPartition = 0;
 
     public CromixStDisk(String fileName, Integer partitionIndex) throws STDiskException {
+        this(fileName, null, null, partitionIndex);
+    }
+
+    public CromixStDisk(String fileName, Integer lbaStart, Integer lbaSize, Integer partitionIndex) throws STDiskException {
         byte[] sector = new byte[SECTOR_SIZE];
 
-        try (InputStream in = new FileInputStream(fileName)) {
+        try (InputStream in = Files.newInputStream(Paths.get(fileName))) {
+            // Read until the start of the MBR partition
+            for (int i = 0; i < Optional.ofNullable(lbaStart).orElse(0); i++) {
+                in.read(sector, 0, SECTOR_SIZE);
+            }
             if (in.read(sector, 0, SECTOR_SIZE) != SECTOR_SIZE) {
                 throw new STDiskException("Could not read sector 0");
             }
@@ -41,6 +50,11 @@ public class CromixStDisk implements DiskInterface {
         media = new byte[info.getCylinderCount()][info.getSurfaceCount()][info.getSectorsPerTrack()][info.getBytesPerSector()];
 
         try (InputStream in = new FileInputStream(fileName)) {
+            // Read until the start of the MBR partition
+            for (int i = 0; i < Optional.ofNullable(lbaStart).orElse(0); i++) {
+                in.read(sector, 0, SECTOR_SIZE);
+            }
+
             for (int c = 0; c < info.getCylinderCount(); c++) {
                 for (int h = 0; h < info.getSurfaceCount(); h++) {
                     for (int s = 0; s < info.getSectorsPerTrack(); s++) {

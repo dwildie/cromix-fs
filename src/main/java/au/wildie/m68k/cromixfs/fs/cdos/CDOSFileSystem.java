@@ -2,6 +2,7 @@ package au.wildie.m68k.cromixfs.fs.cdos;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
 import au.wildie.m68k.cromixfs.fs.FileSystem;
+import au.wildie.m68k.cromixfs.fs.FileSystemTreeDirectoryNode;
 import lombok.Getter;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
@@ -112,6 +113,11 @@ public class CDOSFileSystem implements FileSystem {
     @Override
     public void extract(String path, PrintStream out) throws IOException {
 
+    }
+
+    @Override
+    public FileSystemTreeDirectoryNode tree() {
+        return null;
     }
 
     protected boolean twoByteClusterPointers() {

@@ -4,17 +4,17 @@ import lombok.Getter;
 
 @Getter
 public class STDCDiskInfo {
-    private int cylinderCount;          // 2 bytes
-    private int alternateTrackCount;    // 2 bytes
-    private int surfaceCount;           // 1 byte
-    private int sectorsPerTrack;        // 1 byte
-    private int bytesPerSector;         // 2 bytes
-    private int startOfAltTrackTable;   // 2 bytes
-    private int startCylinder;          // 2 bytes
-    private int altTrackCylinder;       // 2 bytes
-    private int startOfPartitionTable;  // 2 bytes
-    private byte[] hardDiskIdentifier;  // 4 bytes
-    private int writePrecompCylinder;   // 2 bytes
+    private final int cylinderCount;          // 2 bytes
+    private final int alternateTrackCount;    // 2 bytes
+    private final int surfaceCount;           // 1 byte
+    private final int sectorsPerTrack;        // 1 byte
+    private final int bytesPerSector;         // 2 bytes
+    private final int startOfAltTrackTable;   // 2 bytes
+    private final int startCylinder;          // 2 bytes
+    private final int altTrackCylinder;       // 2 bytes
+    private final int startOfPartitionTable;  // 2 bytes
+    private final byte[] hardDiskIdentifier;  // 4 bytes
+    private final int writePrecompCylinder;   // 2 bytes
 
     public STDCDiskInfo(byte[][][][] media) {
         this(media[0][0][0]);
