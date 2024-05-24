@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.*;
 
 public abstract class IMDFloppyImage implements DiskInterface {
-    protected final IMDImage image;
+    @Getter protected final IMDImage image;
     @Getter private final String formatLabel;
     private final PrintStream out;
 

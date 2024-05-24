@@ -2,7 +2,8 @@ package au.wildie.m68k.cromixfs.fs.cdos;
 
 import au.wildie.m68k.cromixfs.disk.DiskInterface;
 import au.wildie.m68k.cromixfs.fs.FileSystem;
-import au.wildie.m68k.cromixfs.fs.FileSystemTreeDirectoryNode;
+import au.wildie.m68k.cromixfs.fs.FileSystemDirectoryNode;
+import au.wildie.m68k.cromixfs.fs.cromix.Inode;
 import lombok.Getter;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
@@ -116,7 +117,7 @@ public class CDOSFileSystem implements FileSystem {
     }
 
     @Override
-    public FileSystemTreeDirectoryNode tree() {
+    public FileSystemDirectoryNode tree() {
         return null;
     }
 
@@ -132,5 +133,10 @@ public class CDOSFileSystem implements FileSystem {
         }
 
         return out.toByteArray();
+    }
+
+    @Override
+    public byte[] readFile(String name, Inode inode) {
+        return null;
     }
 }

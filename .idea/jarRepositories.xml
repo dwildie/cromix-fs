@@ -27,6 +27,11 @@
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="sonatype-snapshot" />
+      <option name="name" value="Sonatype Snapshot" />
+      <option name="url" value="https://nexus.qcaa.qld.edu.au/repository/sonatype-snapshot" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="libs-release-local" />
       <option name="name" value="libs-release-local" />
       <option name="url" value="https://nexus.qcaa.qld.edu.au/repository/maven-all" />

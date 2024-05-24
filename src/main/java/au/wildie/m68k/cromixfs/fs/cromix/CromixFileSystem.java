@@ -8,6 +8,7 @@ import au.wildie.m68k.cromixfs.fs.FileSystem;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -107,7 +108,7 @@ public class CromixFileSystem implements FileSystem {
     }
 
     @Override
-    public CromixFileSystemTreeDirectoryNode tree() {
+    public CromixFileSystemDirectoryNode tree() {
         return readDirectoryTree("", inodeManager.getInode( 1));
     }
 
@@ -448,8 +449,8 @@ public class CromixFileSystem implements FileSystem {
         return extent;
     }
 
-    private CromixFileSystemTreeDirectoryNode readDirectoryTree(String name, Inode inode) {
-        CromixFileSystemTreeDirectoryNode treeNode = new CromixFileSystemTreeDirectoryNode(name, inode);
+    private CromixFileSystemDirectoryNode readDirectoryTree(String name, Inode inode) {
+        CromixFileSystemDirectoryNode treeNode = new CromixFileSystemDirectoryNode(name, inode);
 
         for (int i = 0; i < INDIRECT_1_BLOCK; i++) {
             int blockNumber = inode.getBlockNumber(i);
@@ -461,7 +462,7 @@ public class CromixFileSystem implements FileSystem {
                         if (entryInode.getType() == DIRECTORY) {
                             treeNode.add(readDirectoryTree(entry.getName(), entryInode));
                         } else {
-                            treeNode.add(new CromixFileSystemTreeFileNode(entry.getName(), entryInode));
+                            treeNode.add(new CromixFileSystemFileNode(entry.getName(), entryInode));
                         }
                     }
                 }
@@ -521,6 +522,64 @@ public class CromixFileSystem implements FileSystem {
             }
         }
         listingOut.print("");
+    }
+
+    @Override
+    public byte[] readFile(String name, Inode inode) throws IOException {
+        ByteArrayOutputStream content = new ByteArrayOutputStream();
+        int remainingBytes = inode.getFileSize();
+
+        try {
+            // Read first 16 data blocks
+            for (int i = 0; i < 0x10 && remainingBytes > 0; i++) {
+                int blockNumber = inode.getBlockNumber(i);
+                if (blockNumber != 0) {
+                    byte[] data = getBlock(blockNumber);
+                    int bytes = Math.min(remainingBytes, data.length);
+                    content.write(data, 0, bytes);
+                    remainingBytes -= bytes;
+                }
+            }
+
+            if (remainingBytes == 0) {
+                return content.toByteArray();
+            }
+
+            // 17th pointer
+            int blockNumber = inode.getBlockNumber(INDIRECT_1_BLOCK);
+            if (blockNumber != 0) {
+                remainingBytes = extractPointerBlock(blockNumber, content, remainingBytes);
+            }
+
+            if (remainingBytes == 0) {
+                return content.toByteArray();
+            }
+
+            // 18th pointer
+            blockNumber = inode.getBlockNumber(INDIRECT_2_BLOCK);
+            if (blockNumber != 0) {
+                remainingBytes = extractPointerPointerBlock(blockNumber, content, remainingBytes);
+            }
+
+            if (remainingBytes == 0) {
+                return content.toByteArray();
+            }
+
+            // 19th pointer
+            blockNumber = inode.getBlockNumber(INDIRECT_3_BLOCK);
+            if (blockNumber != 0) {
+                remainingBytes = extractPointerPointerPointerBlock(blockNumber, content, remainingBytes);
+            }
+
+            if (remainingBytes != 0) {
+                String error = String.format("Did not read all bytes, %d remaining", name, remainingBytes);
+                System.out.println(error);
+                //throw new RuntimeException(error);
+            }
+        } catch (ImageException e) {
+            System.out.printf("Error extracting file %s, only %d bytes of %d bytes extracted. %s\n", name, inode.getFileSize() - remainingBytes, inode.getFileSize(), e.getMessage());
+        }
+        return content.toByteArray();
     }
 
     private void extractFile(Inode inode, int size, CromixTime modified, String path) throws IOException {

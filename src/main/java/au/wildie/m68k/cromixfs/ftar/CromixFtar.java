@@ -5,7 +5,8 @@ import au.wildie.m68k.cromixfs.disk.SectorInvalidException;
 import au.wildie.m68k.cromixfs.disk.imd.ImageException;
 import au.wildie.m68k.cromixfs.fs.CromixTime;
 import au.wildie.m68k.cromixfs.fs.FileSystemOps;
-import au.wildie.m68k.cromixfs.fs.FileSystemTreeDirectoryNode;
+import au.wildie.m68k.cromixfs.fs.FileSystemDirectoryNode;
+import au.wildie.m68k.cromixfs.fs.cromix.Inode;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
@@ -73,7 +74,7 @@ public class CromixFtar implements FileSystemOps {
     }
 
     @Override
-    public FileSystemTreeDirectoryNode tree() {
+    public FileSystemDirectoryNode tree() {
         return null;
     }
 
@@ -353,5 +354,10 @@ public class CromixFtar implements FileSystemOps {
             default:
                 return String.format("%d", val);
         }
+    }
+
+    @Override
+    public byte[] readFile(String name, Inode inode) {
+        return null;
     }
 }
