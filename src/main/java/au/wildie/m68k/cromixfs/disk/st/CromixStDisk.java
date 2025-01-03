@@ -83,7 +83,7 @@ public class CromixStDisk implements DiskInterface {
 
     @Override
     public void flushSuperBlock(byte[] data) {
-        // TODO
+        System.arraycopy(data, 0, getBlock(1), 0, data.length);
     }
 
     @Override
@@ -101,7 +101,13 @@ public class CromixStDisk implements DiskInterface {
 
     @Override
     public void persist(OutputStream archive) throws IOException {
-        // TODO
+        for (int c = 0; c < info.getCylinderCount(); c++) {
+            for (int h = 0; h < info.getSurfaceCount(); h++) {
+                for (int s = 0; s < info.getSectorsPerTrack(); s++) {
+                    archive.write(media[c][h][s]);
+                }
+            }
+        }
     }
 
     @Override
